@@ -1,4 +1,3 @@
-// https://github.com/joewalnes/reconnecting-websocket/
 var inbox = new WebSocket("ws://"+ location.host + "/receive");
 var outbox = new WebSocket("ws://"+ location.host + "/submit");
 
