@@ -32,7 +32,6 @@ def inbox(ws):
 @sockets.route('/receive')
 def outbox(ws):
     pubsub.subscribe(REDIS_CHAN)
-    ws.send('hi')
 
     while True:
         # Message receipt
