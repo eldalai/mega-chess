@@ -36,7 +36,8 @@ class ChatBackend(object):
     def run(self):
         for data in self.__iter_data():
             for client in self.clients:
-                client.send(data)
+                gevent.spawn(client.send, data)
+
 
     def start(self):
         gevent.spawn(self.run)
