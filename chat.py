@@ -33,10 +33,16 @@ class ChatBackend(object):
                 app.logger.info(u'Sending message: {}'.format(data))
                 yield data
 
+    def send(self, client, data):
+        try:
+            client.send(data)
+        except Exception:
+            self.clients.remove(client)
+
     def run(self):
         for data in self.__iter_data():
             for client in self.clients:
-                gevent.spawn(client.send, data)
+                gevent.spawn(self.send, client, data)
 
 
     def start(self):
