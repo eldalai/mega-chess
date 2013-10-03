@@ -108,3 +108,7 @@ def outbox(ws):
 @app.route('/')
 def hello():
     return render_template('index.html')
+
+@app.route('/active')
+def active():
+    return len(chats.clients)
