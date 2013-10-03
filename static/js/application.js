@@ -9,12 +9,16 @@ inbox.onmessage = function(message) {
   }, 800);
 };
 
+// inbox.onopen
 inbox.onclose = function(){
-    alert('inbox closed')
+    console.log('inbox closed');
+    this.inbox = new WebSocket(inbox.url);
+
 };
 
 outbox.onclose = function(){
-    alert('inbox closed')
+    console.log('outbox closed');
+    this.outbox = new WebSocket(outbox.url);
 };
 
 $("#input-form").on("submit", function(event) {
