@@ -26,16 +26,12 @@ redis = redis.from_url(REDIS_URL)
 
 
 class ChatBackend(object):
-    """Interface for registering and updating BebSocket clients."""
+    """Interface for registering and updating WebSocket clients."""
 
     def __init__(self):
         self.clients = list()
         self.pubsub = redis.pubsub()
         self.pubsub.subscribe(REDIS_CHAN)
-
-    def register(self, client):
-        """Register a WebSocket connection for Redis updates."""
-        self.clients.append(client)
 
     def __iter_data(self):
         for message in self.pubsub.listen():
@@ -44,8 +40,13 @@ class ChatBackend(object):
                 app.logger.info(u'Sending message: {}'.format(data))
                 yield data
 
+    def register(self, client):
+        """Register a WebSocket connection for Redis updates."""
+        self.clients.append(client)
+
     def send(self, client, data):
-        """Send given data to all registered clients."""
+        """Send given data to the registered client.
+        Automatically discards invalid connections."""
         try:
             client.send(data)
         except Exception:
@@ -65,6 +66,10 @@ chats = ChatBackend()
 chats.start()
 
 
+@app.route('/')
+def hello():
+    return render_template('index.html')
+
 @sockets.route('/submit')
 def inbox(ws):
     """Receives incoming chat messages, inserts them into Redis."""
@@ -77,8 +82,6 @@ def inbox(ws):
             app.logger.info(u'Inserting message: {}'.format(message))
             redis.publish(REDIS_CHAN, message)
 
-
-
 @sockets.route('/receive')
 def outbox(ws):
     """Sends outgoing chat messages, via `ChatBackend`."""
@@ -89,7 +92,4 @@ def outbox(ws):
         gevent.sleep()
 
 
-@app.route('/')
-def hello():
-    return render_template('index.html')
 
