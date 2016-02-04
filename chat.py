@@ -89,7 +89,7 @@ def outbox(ws):
 
     while not ws.closed:
         # Context switch while `ChatBackend.start` is running in the background.
-        gevent.sleep()
+        gevent.sleep(0.1)
 
 
 
