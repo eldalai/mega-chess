@@ -1,5 +1,5 @@
 // Support TLS-specific URLs, when appropriate.
-if (window.location.protocol == "https") {
+if (window.location.protocol == "https:") {
   var ws_scheme = "wss://";
 } else {
   var ws_scheme = "ws://"
