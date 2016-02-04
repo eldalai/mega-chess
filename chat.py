@@ -14,7 +14,7 @@ import gevent
 from flask import Flask, render_template
 from flask_sockets import Sockets
 
-REDIS_URL = os.environ['REDISCLOUD_URL']
+REDIS_URL = os.environ['REDIS_URL']
 REDIS_CHAN = 'chat'
 
 app = Flask(__name__)
