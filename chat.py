@@ -74,7 +74,7 @@ def hello():
 def inbox(ws):
     """Receives incoming chat messages, inserts them into Redis."""
     while not ws.closed:
-        # Sleep to prevent *contstant* context-switches.
+        # Sleep to prevent *constant* context-switches.
         gevent.sleep(0.1)
         message = ws.receive()
 
