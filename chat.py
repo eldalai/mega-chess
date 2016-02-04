@@ -87,7 +87,7 @@ def outbox(ws):
     """Sends outgoing chat messages, via `ChatBackend`."""
     chats.register(ws)
 
-    while ws.socket is not None:
+    while not ws.closed:
         # Context switch while `ChatBackend.start` is running in the background.
         gevent.sleep()
 
