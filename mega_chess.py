@@ -23,6 +23,9 @@ app.debug = 'DEBUG' in os.environ
 sockets = Sockets(app)
 redis = redis.from_url(REDIS_URL)
 
+from pychess.chess import Board
+
+b = Board()
 
 
 class ChatBackend(object):
@@ -42,20 +45,24 @@ class ChatBackend(object):
 
     def register(self, client):
         """Register a WebSocket connection for Redis updates."""
+        app.logger.info(u'Regiter client: {}'.format(client))
         self.clients.append(client)
 
     def send(self, client, data):
         """Send given data to the registered client.
         Automatically discards invalid connections."""
         try:
+            app.logger.info(u'send to client: {}'.format(client))
             client.send(data)
         except Exception:
+            app.logger.info(u'Exception on sending to client: {}'.format(client))
             self.clients.remove(client)
 
     def run(self):
         """Listens for new messages in Redis, and sends them to clients."""
         for data in self.__iter_data():
             for client in self.clients:
+                app.logger.info(u'Sending data: {} to: {}'.format(data, client))
                 gevent.spawn(self.send, client, data)
 
     def start(self):
