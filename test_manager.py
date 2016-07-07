@@ -8,15 +8,15 @@ from pychess.chess import (
 from manager import (
     InvalidBoardIdException,
     InvalidTurnTokenException,
-    Manager,
+    ChessManager,
 )
 
 
-class TestManager(unittest.TestCase):
+class TestChessManager(unittest.TestCase):
 
     def setUp(self):
-        super(TestManager, self).setUp()
-        self.manager = Manager()
+        super(TestChessManager, self).setUp()
+        self.manager = ChessManager()
         self.board_id = self.manager.create_board()
 
     def test_get_invalid_board(self):

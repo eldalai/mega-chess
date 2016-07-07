@@ -15,7 +15,7 @@ class InvalidTurnTokenException(ManagerException):
     pass
 
 
-class Manager(object):
+class ChessManager(object):
     '''
     Responsable to map board_id with board_id
 
@@ -23,7 +23,7 @@ class Manager(object):
     '''
 
     def __init__(self):
-        super(Manager, self).__init__()
+        super(ChessManager, self).__init__()
         self.boards = {}
         self.turns = {}
 
