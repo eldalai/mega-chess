@@ -1,5 +1,6 @@
 import gevent
 import json
+import random
 
 from users import UserManager
 from manager import ChessManager
@@ -40,6 +41,7 @@ class Controller(object):
 
     def execute_message(self, client, message):
         try:
+            print 'sent from {0}: {1}'.format(client, message)
             method_name, data = self.parse_message(message)
             result = self.process_message(client, method_name, data)
             # gevent.spawn(
@@ -94,20 +96,59 @@ class Controller(object):
                 'users_list': self.user_manager.active_user_list
             }
             for active_clients in self.user_manager.active_clients:
-                gevent.spawn(self.send, client, 'update_user_list', data)
+                # gevent.spawn(
+                self.send(client, 'update_user_list', data)
+        return True
+
+    def action_accept_challenge(self, client, data):
+        board_id = data['board_id']
+        (turn_token, username) = self.chess_manager.challenge_accepted(board_id)
+        data = {
+            'turn_token': turn_token,
+            'board_id': board_id,
+        }
+        for challenged_client in self.user_manager.get_clients_by_username(username):
+            self.send(challenged_client, 'your_turn', data)
         return True
 
     def action_challenge(self, client, data):
-        white_player_id = ''
-        black_player_id = ''
-        turn_token = self.chess_manager.challenge(
-            white_player_id=white_player_id,
-            black_player_id=black_player_id,
+        challenged_username = data['username']
+        challenger_username = self.user_manager.get_username_by_client(client)
+        if random.choice([True, False]):
+            white_username = challenger_username
+            black_username = challenged_username
+        else:
+            white_username = challenged_username
+            black_username = challenger_username
+        board_id = self.chess_manager.challenge(
+            white_username=white_username,
+            black_username=black_username,
         )
         data = {
-            'turn_token': turn_token
+            'username': challenger_username,
+            'board_id': board_id,
         }
-        gevent.spawn(self.send, client, 'your_turn', data)
+        #  gevent.spawn(
+        for challenged_client in self.user_manager.get_clients_by_username(challenged_username):
+            self.send(challenged_client, 'ask_challenge', data)
+        return True
+
+    def action_move(self, client, data):
+        board_id = data['board_id']
+        (turn_token, username) = self.chess_manager.move_with_turn_token(
+            turn_token=data['turn_token'],
+            from_row=data['from_row'],
+            from_col=data['from_col'],
+            to_row=data['to_row'],
+            to_col=data['to_col'],
+        )
+        data = {
+            'turn_token': turn_token,
+            'board_id': board_id,
+        }
+        for next_client in self.user_manager.get_clients_by_username(username):
+            self.send(next_client, 'your_turn', data)
+        return True
 
     def send(self, client, action, data):
         """
@@ -120,7 +161,7 @@ class Controller(object):
                 'action': action,
                 'data': data,
             }
-            print message
+            print 'sent to {0}: {1}'.format(client, message)
             client.send(json.dumps(message))
         except Exception:
             pass

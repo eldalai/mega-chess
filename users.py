@@ -53,3 +53,15 @@ class UserManager(object):
                 if not client.closed:
                     actives.append(client)
         return actives
+
+    def get_username_by_client(self, client):
+        for user in self.users.values():
+            for active_client in user['clients']:
+                if active_client == client:
+                    return user['username']
+
+    def get_clients_by_username(self, username):
+        if username in self.users:
+            return self.users[username]['clients']
+        else:
+            return []

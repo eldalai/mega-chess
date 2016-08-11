@@ -1,6 +1,9 @@
 import uuid
 
-from pychess.chess import BoardFactory
+from pychess.chess import (
+    BoardFactory,
+    WHITE,
+)
 
 
 class ManagerException(Exception):
@@ -32,16 +35,22 @@ class ChessManager(object):
             del self.turns[previous_turn_token]
         turn_token = str(uuid.uuid4())
         self.turns[turn_token] = board_id
-        return turn_token
+        board = self.get_board_by_id(board_id)
+        return (turn_token, board.white_username if board.actual_turn == WHITE else board.black_username)
 
-    def challenge(self, white_player_id, black_player_id):
-        board_id = self.create_board()
-        turn_token = self._next_turn_token(board_id)
-        return turn_token
+    def challenge(self, white_username, black_username):
+        board_id = self.create_board(white_username, black_username)
+        return board_id
 
-    def create_board(self):
+    def challenge_accepted(self, board_id):
+        board = self.get_board_by_id(board_id)
+        return self._next_turn_token(board_id)
+
+    def create_board(self, white_username, black_username):
         board_id = str(uuid.uuid4())
         self.boards[board_id] = BoardFactory.with_pawns()
+        self.boards[board_id].white_username = white_username
+        self.boards[board_id].black_username = black_username
         return board_id
 
     def get_board_by_id(self, board_id):
