@@ -42,7 +42,7 @@ service.onmessage = function(message) {
     }
   }
   if(data.action == 'your_turn') {
-    alert('it is your turn');
+    alert('it is your turn with ' + data.data.color);
     $('#input-move-board-id')[0].value = data.data.board_id;
     $('#input-move-turn-token')[0].value = data.data.turn_token;
   }

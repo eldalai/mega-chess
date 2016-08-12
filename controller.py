@@ -101,17 +101,6 @@ class Controller(object):
                 self.send(client, 'update_user_list', data)
         return True
 
-    def action_accept_challenge(self, client, data):
-        board_id = data['board_id']
-        (turn_token, username) = self.chess_manager.challenge_accepted(board_id)
-        data = {
-            'turn_token': turn_token,
-            'board_id': board_id,
-        }
-        for challenged_client in self.user_manager.get_clients_by_username(username):
-            self.send(challenged_client, 'your_turn', data)
-        return True
-
     def action_challenge(self, client, data):
         challenged_username = data['username']
         challenger_username = self.user_manager.get_username_by_client(client)
@@ -134,24 +123,39 @@ class Controller(object):
             self.send(challenged_client, 'ask_challenge', data)
         return True
 
-    def action_move(self, client, data):
-        print data
+    def action_accept_challenge(self, client, data):
         board_id = data['board_id']
-        (turn_token, username) = self.chess_manager.move_with_turn_token(
+        next_turn_data = self.chess_manager.challenge_accepted(board_id)
+        self.notify_next_turn(
+            board_id,
+            *next_turn_data
+        )
+        return True
+
+    def action_move(self, client, data):
+        board_id = data['board_id']
+        next_turn_data = self.chess_manager.move_with_turn_token(
             turn_token=data['turn_token'],
             from_row=data['from_row'],
             from_col=data['from_col'],
             to_row=data['to_row'],
             to_col=data['to_col'],
         )
+        self.notify_next_turn(
+            board_id,
+            *next_turn_data
+        )
+        return True
+
+    def notify_next_turn(self, board_id, turn_token, username, color):
         data = {
             'turn_token': turn_token,
             'board_id': board_id,
+            'color': color,
         }
         self.notify_to_board_subscribers(board_id)
         for next_client in self.user_manager.get_clients_by_username(username):
             self.send(next_client, 'your_turn', data)
-        return True
 
     def notify_to_board_subscribers(self, board_id):
         board = self.chess_manager.get_board_by_id(board_id)

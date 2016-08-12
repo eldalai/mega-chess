@@ -36,14 +36,17 @@ class ChessManager(object):
         turn_token = str(uuid.uuid4())
         self.turns[turn_token] = board_id
         board = self.get_board_by_id(board_id)
-        return (turn_token, board.white_username if board.actual_turn == WHITE else board.black_username)
+        return (
+            turn_token,
+            board.white_username if board.actual_turn == WHITE else board.black_username,
+            board.actual_turn,
+        )
 
     def challenge(self, white_username, black_username):
         board_id = self.create_board(white_username, black_username)
         return board_id
 
     def challenge_accepted(self, board_id):
-        board = self.get_board_by_id(board_id)
         return self._next_turn_token(board_id)
 
     def create_board(self, white_username, black_username):

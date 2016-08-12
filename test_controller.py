@@ -182,6 +182,7 @@ class TestActionsSwitcher(unittest.TestCase):
         for call in self.mock_client.send.call_args_list:
             action = json.loads(call[0][0])
             if action['action'] == 'your_turn':
+                self.assertEqual(action['data']['color'], 'white')
                 response = self.controller.execute_message(
                     client=self.mock_client,
                     message=json.dumps({
@@ -200,6 +201,7 @@ class TestActionsSwitcher(unittest.TestCase):
         for call in self.mock_client_2.send.call_args_list:
             action = json.loads(call[0][0])
             if action['action'] == 'your_turn':
+                self.assertEqual(action['data']['color'], 'black')
                 response = self.controller.execute_message(
                     client=self.mock_client_2,
                     message=json.dumps({
