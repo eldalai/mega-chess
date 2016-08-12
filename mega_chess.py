@@ -28,8 +28,13 @@ controller = Controller()
 
 
 @app.route('/')
-def hello():
+def home():
     return render_template('index.html')
+
+
+@app.route('/view')
+def view():
+    return render_template('view.html')
 
 
 @sockets.route('/service')

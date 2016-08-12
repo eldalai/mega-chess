@@ -36,11 +36,42 @@ service.onmessage = function(message) {
       $("#input-challenge-username").append("<option value='" + data.data.users_list[user] + "'>" + data.data.users_list[user] + "</option>");
     }
   }
+  if(data.action == 'ask_challenge') {
+    if( confirm(data.data.username + ' challenge you to play, do you want to play with him?') ) {
+      send('accept_challenge', { board_id: data.data.board_id });
+    }
+  }
+  if(data.action == 'your_turn') {
+    alert('it is your turn');
+    $('#input-move-board-id')[0].value = data.data.board_id;
+    $('#input-move-turn-token')[0].value = data.data.turn_token;
+  }
 };
+
+
+$("#move-form").on("submit", function(event) {
+  event.preventDefault();
+  var board_id   = $("#input-move-board-id")[0].value;
+  var turn_token   = $("#input-move-turn-token")[0].value;
+  var from_row   = parseInt($("#input-move-from-row")[0].value);
+  var from_col   = parseInt($("#input-move-from-col")[0].value);
+  var to_row   = parseInt($("#input-move-to-row")[0].value);
+  var to_col   = parseInt($("#input-move-to-col")[0].value);
+  if(board_id && turn_token && from_row && from_col && to_row && to_col) {
+    send( 'move', {
+        board_id: board_id,
+        turn_token: turn_token,
+        from_row: from_row,
+        from_col: from_col,
+        to_row: to_row,
+        to_col: to_col,
+    });
+  }
+});
+
 
 $("#challenge-form").on("submit", function(event) {
   event.preventDefault();
-  debugger;
   var challenge_username   = $("#input-challenge-username")[0].value;
   var challenge_message   = $("#input-challenge-message")[0].value;
   if(challenge_username) {

@@ -38,6 +38,7 @@ class Controller(object):
 
     chess_manager = ChessManager()
     user_manager = UserManager()
+    board_subscribers = {}
 
     def execute_message(self, client, message):
         try:
@@ -134,6 +135,7 @@ class Controller(object):
         return True
 
     def action_move(self, client, data):
+        print data
         board_id = data['board_id']
         (turn_token, username) = self.chess_manager.move_with_turn_token(
             turn_token=data['turn_token'],
@@ -146,8 +148,29 @@ class Controller(object):
             'turn_token': turn_token,
             'board_id': board_id,
         }
+        self.notify_to_board_subscribers(board_id)
         for next_client in self.user_manager.get_clients_by_username(username):
             self.send(next_client, 'your_turn', data)
+        return True
+
+    def notify_to_board_subscribers(self, board_id):
+        board = self.chess_manager.get_board_by_id(board_id)
+        for board_subscriber_client in self.board_subscribers.get(board_id, []):
+            self.notify_board_update(board_subscriber_client, board)
+
+    def notify_board_update(self, board_subscriber_client, board):
+        data = {
+            'board': str(board)
+        }
+        self.send(board_subscriber_client, 'update_board', data)
+
+    def action_subscribe(self, client, data):
+        board_id = data['board_id']
+        board = self.chess_manager.get_board_by_id(board_id)
+        if board_id not in self.board_subscribers:
+            self.board_subscribers[board_id] = []
+        self.board_subscribers[board_id].append(client)
+        self.notify_board_update(client, board)
         return True
 
     def send(self, client, action, data):

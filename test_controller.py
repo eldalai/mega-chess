@@ -215,6 +215,16 @@ class TestActionsSwitcher(unittest.TestCase):
                     })
                 )
 
+        response = self.controller.execute_message(
+            client=self.mock_client_2,
+            message=json.dumps({
+                "action": "subscribe",
+                "data": {
+                    "board_id": action['data']['board_id'],
+                }
+            })
+        )
+
 
 if __name__ == '__main__':
     unittest.main()

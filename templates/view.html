@@ -1,0 +1,126 @@
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Watching mega chess!</title>
+        <script src="static/js/phaser.min.js"></script>
+        <script type="text/javascript" src="static/js/reconnecting-websocket.min.js"></script>
+    </head>
+    <body>
+
+    <script type="text/javascript">
+
+    window.onload = function() {
+
+        //  Note that this html file is set to pull down Phaser 2.5.0 from the JS Delivr CDN.
+        //  Although it will work fine with this tutorial, it's almost certainly not the most current version.
+        //  Be sure to replace it with an updated version before you start experimenting with adding your own code.
+
+        var game = new Phaser.Game(800, 600, Phaser.CANVAS, '', { preload: preload, create: create, render: render });
+        var cells = [];
+        var cell_size = 60;
+        var style = { font: "60px press_start_kregular", fill: "#000000" };
+
+        if (window.location.protocol == "https:") {
+          var ws_scheme = "wss://";
+        } else {
+          var ws_scheme = "ws://"
+        };
+        var board_id = getParameterByName('board_id');
+        var service = new ReconnectingWebSocket(ws_scheme + location.host + "/service");
+
+        var pieces = {
+            'p': '♟',
+            'P': '♙',
+            'r': '♜',
+            'R': '♖',
+            'k': '♚',
+            'K': '♔',
+            'h': '♞',
+            'H': '♘',
+            'b': '♝',
+            'B': '♗',
+            'q': '♛',
+            'Q': '♕'
+        }
+
+        var graph_pieces = []
+
+        service.onmessage = function(message) {
+          console.log(message.data)
+          var data = JSON.parse(message.data);
+
+          if(data.action == 'update_board') {
+              while(graph_pieces.length > 0) {
+                graph_piece = graph_pieces.pop();
+                graph_piece.destroy(true, true);
+              }
+            board = data.data.board;
+            for(i=1; i <= 8; i++){
+                for(j=1; j <= 8; j++){
+                    row = 12 * i;
+                    col = j + 1;
+                    cel = board.substr(row + col, 1);
+                    console.log(cel);
+                    if( cel ){
+                        graph_pieces.push( game.add.text((j-1) * cell_size, (i-1) * cell_size, pieces[cel], style) );
+                    }
+                }
+            }
+          }
+        };
+
+        function send(action, data) {
+            service.send(JSON.stringify({
+              action: action,
+              data: data
+            }));
+        }
+
+        function getParameterByName(name, url) {
+            if (!url) url = window.location.href;
+            name = name.replace(/[\[\]]/g, "\\$&");
+            var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+                results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, " "));
+        }
+
+        function preload () {
+        }
+
+        function create () {
+
+            //var logo = game.add.sprite(game.world.centerX, game.world.centerY, 'logo');
+            //logo.anchor.setTo(0.5, 0.5);
+            game.stage.backgroundColor = '#124184';
+
+
+            // Make some bodies (no fixtures to start with)
+            for (var row = 0; row < 8; row++)
+                for (var col = 0; col < 8; col++)
+                {
+                    cell = game.add.graphics(row * cell_size, col * cell_size);
+                    if( (row + col + 2) % 2 == 0 ) {
+                        cell_color = '0xffffff';
+                    } else {
+                        cell_color = '0xaaaaaa';
+                    }
+                    cell.beginFill(cell_color);
+                    cell.drawRect( 0, 0, cell_size, cell_size );
+                    cell.endFill();
+                }
+            send('subscribe', { board_id:board_id });
+
+        }
+
+        function render() {
+
+        }
+
+    };
+
+    </script>
+
+    </body>
+</html>
