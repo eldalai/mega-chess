@@ -51,7 +51,7 @@ class ChessManager(object):
 
     def create_board(self, white_username, black_username):
         board_id = str(uuid.uuid4())
-        self.boards[board_id] = BoardFactory.with_pawns()
+        self.boards[board_id] = BoardFactory.size_16()
         self.boards[board_id].white_username = white_username
         self.boards[board_id].black_username = black_username
         return board_id

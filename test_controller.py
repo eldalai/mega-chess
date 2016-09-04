@@ -125,6 +125,7 @@ class TestActionsSwitcher(unittest.TestCase):
             )
 
     def test_valid_login_action(self):
+        self.mock_client.send.reset_mock()
         response = self.controller.execute_message(
             client=self.mock_client,
             message='{"action": "register", "data": {"username": "test_valid_login_action", "password": "12345678"} }'
@@ -136,7 +137,7 @@ class TestActionsSwitcher(unittest.TestCase):
             message='{"action": "login", "data": {"username": "test_valid_login_action", "password": "12345678"} }'
         )
         self.assertTrue(response)
-        self.assertEqual(self.mock_client.send.call_count, 2)
+        self.assertEqual(self.mock_client.send.call_count, 4)
 
     def test_challenge_action(self):
         response = self.controller.execute_message(
@@ -190,9 +191,9 @@ class TestActionsSwitcher(unittest.TestCase):
                         "data": {
                             "board_id": action['data']['board_id'],
                             "turn_token": action['data']['turn_token'],
-                            'from_row': 6,
+                            'from_row': 12,
                             'from_col': 3,
-                            'to_row': 5,
+                            'to_row': 11,
                             'to_col': 3,
                         }
                     })
@@ -209,9 +210,9 @@ class TestActionsSwitcher(unittest.TestCase):
                         "data": {
                             "board_id": action['data']['board_id'],
                             "turn_token": action['data']['turn_token'],
-                            'from_row': 1,
+                            'from_row': 3,
                             'from_col': 3,
-                            'to_row': 2,
+                            'to_row': 4,
                             'to_col': 3,
                         }
                     })
