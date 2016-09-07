@@ -1,3 +1,7 @@
+import bcrypt
+import ujson
+import redis
+
 
 class UserException(Exception):
     pass
@@ -13,25 +17,33 @@ class InvalidAuthLoginException(UserException):
 
 class UserManager(object):
 
-    def __init__(self):
+    def __init__(self, redis_pool):
         super(UserManager, self).__init__()
+        self.redis_pool = redis_pool
         self.users = {}
 
     def register(self, username, password):
         if username in self.users:
             raise UserAlreadyExistsException()
-        self.users[username] = {
+        hash_password = bcrypt.hashpw(
+            password.encode('utf-8'), bcrypt.gensalt())
+        self.users[username] = ujson.dumps({
             'username': username,
-            'password': password,
+            'password': hash_password,
             'clients': [],
-        }
+        })
+        self.redis_pool.set(username, self.users[username])
         return True
 
     def login(self, username, password, client):
-        if username not in self.users:
+        user_string = self.redis_pool.get(username)
+        user = ujson.loads(user_string)
+        if username not in user['username']:
             raise InvalidAuthLoginException()
-        if self.users[username]['password'] != password:
+        if bcrypt.checkpw(password.encode('utf-8'),
+                          user['password'].encode('utf-8')) is False:
             raise InvalidAuthLoginException()
+        self.users[username] = user
         self.users[username]['clients'].append(client)
         return True
 
