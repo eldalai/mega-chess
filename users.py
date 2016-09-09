@@ -23,19 +23,21 @@ class UserManager(object):
         self.users = {}
 
     def register(self, username, password):
-        if username in self.users:
+        if self.redis_pool.exists(username):
             raise UserAlreadyExistsException()
         hash_password = bcrypt.hashpw(
             password.encode('utf-8'), bcrypt.gensalt())
-        self.users[username] = ujson.dumps({
+        user = ujson.dumps({
             'username': username,
             'password': hash_password,
             'clients': [],
         })
-        self.redis_pool.set(username, self.users[username])
+        self.redis_pool.set(username, user)
         return True
 
     def login(self, username, password, client):
+        if not self.redis_pool.exists(username):
+            raise InvalidAuthLoginException()
         user_string = self.redis_pool.get(username)
         user = ujson.loads(user_string)
         if username not in user['username']:
