@@ -13,3 +13,7 @@ git+https://git@github.com/eldalai/pychess.git
 ipdb==0.10.1
 mock==1.0.1
 flask-debugtoolbar==0.10.0
+bcrypt==3.1.0
+Python-Chess==0.3.0
+ujson==1.35
+fakeredis==0.8.1

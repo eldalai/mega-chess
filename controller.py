@@ -36,9 +36,10 @@ class InvalidRegisterException(ControllerExcetions):
 
 class Controller(object):
 
-    chess_manager = ChessManager()
-    user_manager = UserManager()
-    board_subscribers = {}
+    def __init__(self, redisPool):
+        self.chess_manager = ChessManager()
+        self.user_manager = UserManager(redisPool)
+        self.board_subscribers = {}
 
     def execute_message(self, client, message):
         try:
@@ -46,7 +47,7 @@ class Controller(object):
             method_name, data = self.parse_message(message)
             result = self.process_message(client, method_name, data)
             # gevent.spawn(
-            controller.send(client, 'response_ok', data)
+            self.send(client, 'response_ok', data)
             return result
         except Exception, e:
             #  TODO: change exception...
@@ -54,11 +55,11 @@ class Controller(object):
                 'exception': str(type(e))
             }
             # gevent.spawn(
-            controller.send(client, 'response_error', data)
+            self.send(client, 'response_error', data)
             raise e
 
     def process_message(self, client, method_name, data):
-        method = getattr(controller, method_name)
+        method = getattr(self, method_name)
         # Call the method as we return it
         return method(client, data)
 
@@ -72,7 +73,7 @@ class Controller(object):
             raise InvalidNoActionException()
         action_name = job['action']
         method_name = 'action_' + str(action_name)
-        if not hasattr(controller, method_name):
+        if not hasattr(self, method_name):
             raise InvalidActionNameException()
 
         if 'data' not in job:
@@ -194,5 +195,3 @@ class Controller(object):
             pass
             #  app.logger.info(u'Exception on sending to client: {}'.format(client))
             #  self.clients.remove(client)
-
-controller = Controller()

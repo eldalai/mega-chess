@@ -17,8 +17,8 @@
 
         var game = new Phaser.Game(800, 600, Phaser.CANVAS, '', { preload: preload, create: create, render: render });
         var cells = [];
-        var cell_size = 60;
-        var style = { font: "60px press_start_kregular", fill: "#000000" };
+        var cell_size = 35;
+        var style = { font: "35px press_start_kregular", fill: "#000000" };
 
         if (window.location.protocol == "https:") {
           var ws_scheme = "wss://";
@@ -55,9 +55,10 @@
                 graph_piece.destroy(true, true);
               }
             board = data.data.board;
-            for(i=1; i <= 8; i++){
-                for(j=1; j <= 8; j++){
-                    row = 12 * i;
+            console.log(board);
+            for(i=1; i <= 16; i++){
+                for(j=1; j <= 16; j++){
+                    row = (16 + 4) * i;
                     col = j + 1;
                     cel = board.substr(row + col, 1);
                     console.log(cel);
@@ -97,8 +98,8 @@
 
 
             // Make some bodies (no fixtures to start with)
-            for (var row = 0; row < 8; row++)
-                for (var col = 0; col < 8; col++)
+            for (var row = 0; row < 16; row++)
+                for (var col = 0; col < 16; col++)
                 {
                     cell = game.add.graphics(row * cell_size, col * cell_size);
                     if( (row + col + 2) % 2 == 0 ) {

@@ -7,7 +7,6 @@ Chat Server
 This simple application uses WebSockets to run a primitive chat server.
 """
 import os
-import logging
 import redis
 import gevent
 from flask import Flask, render_template
@@ -16,15 +15,14 @@ from flask_sockets import Sockets
 from controller import Controller
 
 REDIS_URL = os.environ['REDIS_URL']
-REDIS_CHAN = 'chat'
+REDIS_DB = os.environ['REDIS_DB']
 
 app = Flask(__name__)
 app.debug = 'DEBUG' in os.environ
 
 sockets = Sockets(app)
-redis = redis.from_url(REDIS_URL)
-
-controller = Controller()
+redisPool = redis.from_url(url=REDIS_URL, db=0)
+controller = Controller(redisPool)
 
 
 @app.route('/')
