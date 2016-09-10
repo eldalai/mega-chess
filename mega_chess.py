@@ -15,7 +15,6 @@ from flask_sockets import Sockets
 from controller import Controller
 
 REDIS_URL = os.environ['REDIS_URL']
-REDIS_DB = os.environ['REDIS_DB']
 
 app = Flask(__name__)
 app.debug = 'DEBUG' in os.environ
