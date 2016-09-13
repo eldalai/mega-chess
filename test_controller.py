@@ -1,4 +1,9 @@
 import json
+
+# from mock_redis import mock_redis_client
+
+import fakeredis
+
 from mock import (
     MagicMock,
     Mock,
@@ -25,7 +30,7 @@ class TestActionsSwitcher(unittest.TestCase):
 
     def setUp(self):
         super(TestActionsSwitcher, self).setUp()
-        self.controller = Controller()
+        self.controller = Controller(fakeredis.FakeStrictRedis())
         self.mock_client = MagicMock()
         self.mock_client_2 = MagicMock()
         closed_property = PropertyMock(return_value=False)
@@ -137,7 +142,7 @@ class TestActionsSwitcher(unittest.TestCase):
             message='{"action": "login", "data": {"username": "test_valid_login_action", "password": "12345678"} }'
         )
         self.assertTrue(response)
-        self.assertEqual(self.mock_client.send.call_count, 4)
+        self.assertEqual(self.mock_client.send.call_count, 2)
 
     def test_challenge_action(self):
         response = self.controller.execute_message(
@@ -175,7 +180,8 @@ class TestActionsSwitcher(unittest.TestCase):
             if action['action'] == 'ask_challenge':
                 response = self.controller.execute_message(
                     client=self.mock_client_2,
-                    message='{"action": "accept_challenge", "data": {"board_id": "%(board_id)s"} }' % {'board_id': action['data']['board_id']}
+                    message='{"action": "accept_challenge", "data": {"board_id": "%(board_id)s"} }' % {
+                        'board_id': action['data']['board_id']}
                 )
 
         self.mock_client_2.send.reset_mock()
