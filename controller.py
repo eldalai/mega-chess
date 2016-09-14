@@ -43,7 +43,7 @@ class Controller(object):
 
     def execute_message(self, client, message):
         try:
-            print 'sent from {0}: {1}'.format(client, message)
+            #  print 'sent from {0}: {1}'.format(client, message)
             method_name, data = self.parse_message(message)
             result = self.process_message(client, method_name, data)
             # gevent.spawn(
@@ -196,7 +196,7 @@ class Controller(object):
                 'action': action,
                 'data': data,
             }
-            print 'sent to {0}: {1}'.format(client, message)
+            #  print 'sent to {0}: {1}'.format(client, message)
             client.send(json.dumps(message))
         except Exception:
             pass
