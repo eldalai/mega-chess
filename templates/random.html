@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Mega Chess</title>
+    <link href="static/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="static/css/application.css" rel="stylesheet" media="screen">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  </head>
+  <body>
+    <div class="container">
+      <div class="jumbotron">
+        <h1>Mega Chess</h1>
+      </div>
+      <form id="register-form" class="form-inline">
+        <div class="form-group">
+          <input id="input-register-username" type="text" class="form-control" placeholder="Enter your username" autofocus />
+        </div>
+        <div class="form-group">
+          <input id="input-register-password" type="password" class="form-control" placeholder="Enter your password" autofocus />
+        </div>
+        <button class="btn btn-primary" type="submit">Register</button>
+      </form>
+      <form id="login-form" class="form-inline">
+        <div class="form-group">
+          <input id="input-login-username" type="text" class="form-control" placeholder="Enter your username" autofocus />
+        </div>
+        <div class="form-group">
+          <input id="input-login-password" type="password" class="form-control" placeholder="Enter your password" autofocus />
+        </div>
+        <button class="btn btn-primary" type="submit">Login</button>
+      </form>
+      <form id="challenge-form" class="form-inline">
+        <div class="form-group">
+          <select id="input-challenge-username" class="form-control" autofocus />
+        </div>
+        <div>
+          <input id="input-challenge-message" type="text" class="form-control" placeholder="Enter a message to your oponent" autofocus />
+        </div>
+        <button class="btn btn-primary" type="submit">Challenge</button>
+      </form>
+      <form id="move-form" class="form-inline">
+        <div class="form-group">
+          <input id="input-move-board-id" class="form-control" autofocus placeholder="board_id"/>
+        </div>
+        <div class="form-group">
+          <input id="input-move-turn-token" class="form-control" autofocus placeholder="turn_token"/>
+        </div>
+        <div class="form-group">
+          <input id="input-move-from-row" class="form-control" autofocus placeholder="from_row"/>
+        </div>
+        <div class="form-group">
+          <input id="input-move-from-col" class="form-control" autofocus placeholder="from_col"/>
+        </div>
+        <div class="form-group">
+          <input id="input-move-to-row" class="form-control" autofocus placeholder="to_row"/>
+        </div>
+        <div class="form-group">
+          <input id="input-move-to-col" class="form-control" autofocus placeholder="to_col"/>
+        </div>
+        <button class="btn btn-primary" type="submit">Move</button>
+      </form>
+    </div>
+
+
+    <script type="text/javascript" src="static/js/jquery-2.0.3.min.js"></script>
+    <script type="text/javascript" src="static/js/reconnecting-websocket.min.js"></script>
+    <script type="text/javascript" src="static/js/random.js"></script>
+  </body>
+</html>
