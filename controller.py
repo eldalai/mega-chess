@@ -43,7 +43,7 @@ class Controller(object):
 
     def execute_message(self, client, message):
         try:
-            print 'sent from {0}: {1}'.format(client, message)
+            #  print 'sent from {0}: {1}'.format(client, message)
             method_name, data = self.parse_message(message)
             result = self.process_message(client, method_name, data)
             # gevent.spawn(
@@ -135,24 +135,31 @@ class Controller(object):
 
     def action_move(self, client, data):
         board_id = data['board_id']
-        next_turn_data = self.chess_manager.move_with_turn_token(
-            turn_token=data['turn_token'],
-            from_row=data['from_row'],
-            from_col=data['from_col'],
-            to_row=data['to_row'],
-            to_col=data['to_col'],
-        )
+        processed = False
+        try:
+            next_turn_data = self.chess_manager.move_with_turn_token(
+                turn_token=data['turn_token'],
+                from_row=data['from_row'],
+                from_col=data['from_col'],
+                to_row=data['to_row'],
+                to_col=data['to_col'],
+            )
+            processed = True
+        except Exception:
+            next_turn_data = self.chess_manager._next_turn_token(board_id)
+
         self.notify_next_turn(
             board_id,
             *next_turn_data
         )
-        return True
+        return processed
 
-    def notify_next_turn(self, board_id, turn_token, username, color):
+    def notify_next_turn(self, board_id, turn_token, username, color, board):
         data = {
             'turn_token': turn_token,
             'board_id': board_id,
             'color': color,
+            'board': board,
         }
         self.notify_to_board_subscribers(board_id)
         for next_client in self.user_manager.get_clients_by_username(username):
@@ -189,7 +196,7 @@ class Controller(object):
                 'action': action,
                 'data': data,
             }
-            print 'sent to {0}: {1}'.format(client, message)
+            #  print 'sent to {0}: {1}'.format(client, message)
             client.send(json.dumps(message))
         except Exception:
             pass

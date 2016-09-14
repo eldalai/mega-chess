@@ -34,6 +34,11 @@ def view():
     return render_template('view.html')
 
 
+@app.route('/random')
+def random():
+    return render_template('random.html')
+
+
 @sockets.route('/service')
 def inbox(ws):
     app.logger.info(u'Receive from {}...'.format(ws))
