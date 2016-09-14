@@ -34,12 +34,14 @@ class ChessManager(object):
         if previous_turn_token and previous_turn_token in self.turns:
             del self.turns[previous_turn_token]
         turn_token = str(uuid.uuid4())
-        self.turns[turn_token] = board_id
         board = self.get_board_by_id(board_id)
+        board.turn_token = turn_token
+        self.turns[turn_token] = board_id
         return (
             turn_token,
             board.white_username if board.actual_turn == WHITE else board.black_username,
             board.actual_turn,
+            str(board),
         )
 
     def challenge(self, white_username, black_username):
