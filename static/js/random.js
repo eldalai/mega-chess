@@ -11,8 +11,8 @@ var boards = {};
 var pieces_strategy = {
     'p': moveBlackPawn,
     'P': moveWhitePawn,
-    'r': null,
-    'R': null,
+    'r': moveRook,
+    'R': moveRook,
     'k': null,
     'K': null,
     'h': null,
@@ -163,10 +163,18 @@ function parseBoard(board_id, board) {
 }
 
 function moveBlackPawn(color, from_row, from_col) {
-  return { to_row: from_row + 1, to_col: from_col }
+  return { to_row: from_row + 1, to_col: from_col + random(3) - 1 }
 }
 function moveWhitePawn(color, from_row, from_col) {
-  return { to_row: from_row - 1, to_col: from_col }
+  return { to_row: from_row - 1, to_col: from_col + random(3) - 1 }
+}
+
+function moveRook(color, from_row, from_col) {
+  if( random(1) ) {
+    return { to_row: from_row + random(16) * ( random(3) - 1 ) , to_col: from_col };
+  } else {
+    return { to_row: from_row, to_col: from_col + random(16) * ( random(3) - 1 ) };
+  }
 }
 
 function verifySubscribeBoard(board_id) {
