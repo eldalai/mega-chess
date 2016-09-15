@@ -172,7 +172,12 @@ class Controller(object):
 
     def notify_board_update(self, board_subscriber_client, board):
         data = {
-            'board': str(board)
+            'board': str(board.board),
+            'white_username': board.white_username,
+            'black_username': board.black_username,
+            'white_score': board.white_score,
+            'black_score': board.black_score,
+
         }
         self.send(board_subscriber_client, 'update_board', data)
 
