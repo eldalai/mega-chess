@@ -55,13 +55,16 @@
                 graph_piece.destroy(true, true);
               }
             board = data.data.board;
+            white_username.setText(data.data.white_username)
+            white_score.setText(data.data.white_score)
+            black_username.setText(data.data.black_username)
+            black_score.setText(data.data.black_score)
             console.log(board);
             for(i=1; i <= 16; i++){
                 for(j=1; j <= 16; j++){
                     row = (16 + 4) * i;
                     col = j + 1;
                     cel = board.substr(row + col, 1);
-                    console.log(cel);
                     if( cel ){
                         graph_pieces.push( game.add.text((j-1) * cell_size, (i-1) * cell_size, pieces[cel], style) );
                     }
@@ -111,6 +114,18 @@
                     cell.drawRect( 0, 0, cell_size, cell_size );
                     cell.endFill();
                 }
+            black_username = game.add.text(
+                600, 15, 'black_player', { font: '16px Arial', fill: '#ffffff' }
+            );
+            black_score = game.add.text(
+                600, 55, 'black_score', { font: '16px Arial', fill: '#ffffff' }
+            );
+            white_username = game.add.text(
+                600, 500, 'white_player', { font: '16px Arial', fill: '#ffffff' }
+            );
+            white_score = game.add.text(
+                600, 540, 'white_score', { font: '16px Arial', fill: '#ffffff' }
+            );
             send('subscribe', { board_id:board_id });
 
         }

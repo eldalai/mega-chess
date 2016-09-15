@@ -29,20 +29,26 @@ class TestChessManager(unittest.TestCase):
     def test_create_board(self):
         board = self.manager.get_board_by_id(self.board_id)
         self.assertIsNotNone(board)
-        self.assertEqual(board.actual_turn, WHITE)
+        self.assertEqual(board.board.actual_turn, WHITE)
+        self.assertEqual(board.white_score, 0)
+        self.assertEqual(board.black_score, 0)
 
     def test_invalid_move(self):
         with self.assertRaises(InvalidTurnException):
             self.manager.move(self.board_id, 2, 3, 3, 3)
         board = self.manager.get_board_by_id(self.board_id)
         self.assertIsNotNone(board)
-        self.assertEqual(board.actual_turn, WHITE)
+        self.assertEqual(board.board.actual_turn, WHITE)
+        self.assertEqual(board.white_score, 0)
+        self.assertEqual(board.black_score, 0)
 
     def test_move(self):
         self.manager.move(self.board_id, 12, 3, 11, 3)
         board = self.manager.get_board_by_id(self.board_id)
         self.assertIsNotNone(board)
-        self.assertEqual(board.actual_turn, BLACK)
+        self.assertEqual(board.board.actual_turn, BLACK)
+        self.assertEqual(board.black_score, 0)
+        self.assertEqual(board.white_score, 10)
 
     def test_start_game(self):
         turn_token = self.manager.challenge('user1', 'user2')
