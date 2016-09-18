@@ -1,4 +1,3 @@
-import gevent
 import json
 import random
 
@@ -34,11 +33,16 @@ class InvalidRegisterException(ControllerExcetions):
     pass
 
 
+class InvalidSaveTurnException(ControllerExcetions):
+    pass
+
+
 class Controller(object):
 
-    def __init__(self, redisPool):
+    def __init__(self, redis_pool):
         self.chess_manager = ChessManager()
-        self.user_manager = UserManager(redisPool)
+        self.user_manager = UserManager(redis_pool)
+        self.redis_pool = redisPool
         self.board_subscribers = {}
 
     def execute_message(self, client, message):
@@ -46,7 +50,6 @@ class Controller(object):
             #  print 'sent from {0}: {1}'.format(client, message)
             method_name, data = self.parse_message(message)
             result = self.process_message(client, method_name, data)
-            # gevent.spawn(
             self.send(client, 'response_ok', data)
             return result
         except Exception, e:
@@ -54,7 +57,6 @@ class Controller(object):
             data = {
                 'exception': str(type(e))
             }
-            # gevent.spawn(
             self.send(client, 'response_error', data)
             raise e
 
@@ -98,7 +100,6 @@ class Controller(object):
                 'users_list': self.user_manager.active_user_list
             }
             for active_clients in self.user_manager.active_clients:
-                # gevent.spawn(
                 self.send(client, 'update_user_list', data)
         return True
 
@@ -119,7 +120,6 @@ class Controller(object):
             'username': challenger_username,
             'board_id': board_id,
         }
-        #  gevent.spawn(
         for challenged_client in self.user_manager.get_clients_by_username(challenged_username):
             self.send(challenged_client, 'ask_challenge', data)
         return True
@@ -161,9 +161,21 @@ class Controller(object):
             'color': color,
             'board': board,
         }
+        if not self._save_turn(data):
+            return InvalidSaveTurnException
         self.notify_to_board_subscribers(board_id)
         for next_client in self.user_manager.get_clients_by_username(username):
             self.send(next_client, 'your_turn', data)
+
+    def _save_turn(self, data):
+        try:
+            data_json = ujson.dumps(data)
+            self.redis_pool.set(
+                "{0}:{1}".format('turn', data['turn_token']),
+                data_json)
+            return True
+        except Exception:
+            return False
 
     def notify_to_board_subscribers(self, board_id):
         board = self.chess_manager.get_board_by_id(board_id)
