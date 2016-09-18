@@ -42,7 +42,7 @@ class Controller(object):
     def __init__(self, redis_pool):
         self.chess_manager = ChessManager()
         self.user_manager = UserManager(redis_pool)
-        self.redis_pool = redisPool
+        self.redis_pool = redis_pool
         self.board_subscribers = {}
 
     def execute_message(self, client, message):
