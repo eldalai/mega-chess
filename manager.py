@@ -42,9 +42,9 @@ class InvalidTurnTokenException(ManagerException):
     pass
 
 
-class PlayingBoard(object):
+class BoardGame(object):
 
-    def __init__(self, board, white_username, black_username ):
+    def __init__(self, board, white_username, black_username):
         self.board = board
         self.white_username = white_username
         self.black_username = black_username
@@ -95,7 +95,7 @@ class ChessManager(object):
 
     def create_board(self, white_username, black_username):
         board_id = str(uuid.uuid4())
-        self.boards[board_id] = PlayingBoard(
+        self.boards[board_id] = BoardGame(
             board=BoardFactory.size_16(),
             white_username=white_username,
             black_username=black_username,
