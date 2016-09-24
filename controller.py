@@ -1,4 +1,4 @@
-import json
+import ujson
 import random
 
 from users import UserManager
@@ -39,10 +39,11 @@ class InvalidSaveTurnException(ControllerExcetions):
 
 class Controller(object):
 
-    def __init__(self, redis_pool):
+    def __init__(self, redis_pool, logger):
         self.chess_manager = ChessManager()
         self.user_manager = UserManager(redis_pool)
         self.redis_pool = redis_pool
+        self.logger = logger
         self.board_subscribers = {}
 
     def execute_message(self, client, message):
@@ -67,7 +68,7 @@ class Controller(object):
 
     def parse_message(self, message):
         try:
-            job = json.loads(message)
+            job = ujson.loads(message)
         except ValueError:
             raise InvalidActionFormatException()
 
@@ -208,14 +209,12 @@ class Controller(object):
         Automatically discards invalid connections.
         """
         try:
-            #  app.logger.info(u'send to client: {}'.format(client))
             message = {
                 'action': action,
                 'data': data,
             }
-            #  print 'sent to {0}: {1}'.format(client, message)
-            client.send(json.dumps(message))
-        except Exception:
-            pass
-            #  app.logger.info(u'Exception on sending to client: {}'.format(client))
+            self.logger.info('sent to {0}: {1}'.format(client, message))
+            client.send(ujson.dumps(message))
+        except Exception, e:
+            self.logger.info(u'Exception on sending to client: {} {}'.format(client, e.message))
             #  self.clients.remove(client)

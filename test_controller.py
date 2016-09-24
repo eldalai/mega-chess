@@ -30,7 +30,11 @@ class TestActionsSwitcher(unittest.TestCase):
 
     def setUp(self):
         super(TestActionsSwitcher, self).setUp()
-        self.controller = Controller(fakeredis.FakeStrictRedis())
+        self.fake_logger = MagicMock()
+        self.controller = Controller(
+            fakeredis.FakeStrictRedis(),
+            self.fake_logger,
+        )
         self.mock_client = MagicMock()
         self.mock_client_2 = MagicMock()
         closed_property = PropertyMock(return_value=False)

@@ -19,8 +19,8 @@ var pieces_strategy = {
     'H': null,
     'b': null,
     'B': null,
-    'q': null,
-    'Q': null
+    'q': moveQueen,
+    'Q': moveQueen
 };
 var processing = false;
 
@@ -63,6 +63,7 @@ service.onmessage = function(message) {
   }
 
   if(data.action == 'your_turn') {
+    $("#view-board").attr('href', 'view?board_id=' + data.data.board_id);
     console.log('processing ' + data.data.turn_token);
     while(processing){
       console.log('processing');
@@ -167,6 +168,16 @@ function moveBlackPawn(color, from_row, from_col) {
 }
 function moveWhitePawn(color, from_row, from_col) {
   return { to_row: from_row - 1, to_col: from_col + random(3) - 1 }
+}
+
+function moveQueen(color, from_row, from_col) {
+  distance = random(8);
+  vertical = random(3) - 1;
+  horizontal = random(3) - 1;
+  return {
+    to_row: from_row + (distance * vertical),
+    to_col: from_col + (distance * horizontal)
+  }
 }
 
 function moveRook(color, from_row, from_col) {
