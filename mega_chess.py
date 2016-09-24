@@ -21,7 +21,7 @@ app.debug = 'DEBUG' in os.environ
 
 sockets = Sockets(app)
 redisPool = redis.from_url(url=REDIS_URL, db=0)
-controller = Controller(redisPool)
+controller = Controller(redisPool, app.logger)
 
 
 @app.route('/')
@@ -32,6 +32,11 @@ def home():
 @app.route('/view')
 def view():
     return render_template('view.html')
+
+
+@app.route('/random')
+def random():
+    return render_template('random.html')
 
 
 @sockets.route('/service')

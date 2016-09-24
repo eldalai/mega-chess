@@ -1,5 +1,4 @@
-import gevent
-import json
+import ujson
 import random
 
 from users import UserManager
@@ -34,19 +33,24 @@ class InvalidRegisterException(ControllerExcetions):
     pass
 
 
+class InvalidSaveTurnException(ControllerExcetions):
+    pass
+
+
 class Controller(object):
 
-    def __init__(self, redisPool):
+    def __init__(self, redis_pool, logger):
         self.chess_manager = ChessManager()
-        self.user_manager = UserManager(redisPool)
+        self.user_manager = UserManager(redis_pool)
+        self.redis_pool = redis_pool
+        self.logger = logger
         self.board_subscribers = {}
 
     def execute_message(self, client, message):
         try:
-            print 'sent from {0}: {1}'.format(client, message)
+            #  print 'sent from {0}: {1}'.format(client, message)
             method_name, data = self.parse_message(message)
             result = self.process_message(client, method_name, data)
-            # gevent.spawn(
             self.send(client, 'response_ok', data)
             return result
         except Exception, e:
@@ -54,7 +58,6 @@ class Controller(object):
             data = {
                 'exception': str(type(e))
             }
-            # gevent.spawn(
             self.send(client, 'response_error', data)
             raise e
 
@@ -65,7 +68,7 @@ class Controller(object):
 
     def parse_message(self, message):
         try:
-            job = json.loads(message)
+            job = ujson.loads(message)
         except ValueError:
             raise InvalidActionFormatException()
 
@@ -98,7 +101,6 @@ class Controller(object):
                 'users_list': self.user_manager.active_user_list
             }
             for active_clients in self.user_manager.active_clients:
-                # gevent.spawn(
                 self.send(client, 'update_user_list', data)
         return True
 
@@ -119,7 +121,6 @@ class Controller(object):
             'username': challenger_username,
             'board_id': board_id,
         }
-        #  gevent.spawn(
         for challenged_client in self.user_manager.get_clients_by_username(challenged_username):
             self.send(challenged_client, 'ask_challenge', data)
         return True
@@ -135,28 +136,47 @@ class Controller(object):
 
     def action_move(self, client, data):
         board_id = data['board_id']
-        next_turn_data = self.chess_manager.move_with_turn_token(
-            turn_token=data['turn_token'],
-            from_row=data['from_row'],
-            from_col=data['from_col'],
-            to_row=data['to_row'],
-            to_col=data['to_col'],
-        )
+        processed = False
+        try:
+            next_turn_data = self.chess_manager.move_with_turn_token(
+                turn_token=data['turn_token'],
+                from_row=data['from_row'],
+                from_col=data['from_col'],
+                to_row=data['to_row'],
+                to_col=data['to_col'],
+            )
+            processed = True
+        except Exception:
+            next_turn_data = self.chess_manager._next_turn_token(board_id)
+
         self.notify_next_turn(
             board_id,
             *next_turn_data
         )
-        return True
+        return processed
 
-    def notify_next_turn(self, board_id, turn_token, username, color):
+    def notify_next_turn(self, board_id, turn_token, username, color, board):
         data = {
             'turn_token': turn_token,
             'board_id': board_id,
             'color': color,
+            'board': board,
         }
+        if not self._save_turn(data):
+            return InvalidSaveTurnException
         self.notify_to_board_subscribers(board_id)
         for next_client in self.user_manager.get_clients_by_username(username):
             self.send(next_client, 'your_turn', data)
+
+    def _save_turn(self, data):
+        try:
+            data_json = ujson.dumps(data)
+            self.redis_pool.set(
+                "{0}:{1}".format('turn', data['turn_token']),
+                data_json)
+            return True
+        except Exception:
+            return False
 
     def notify_to_board_subscribers(self, board_id):
         board = self.chess_manager.get_board_by_id(board_id)
@@ -165,7 +185,12 @@ class Controller(object):
 
     def notify_board_update(self, board_subscriber_client, board):
         data = {
-            'board': str(board)
+            'board': str(board.board),
+            'white_username': board.white_username,
+            'black_username': board.black_username,
+            'white_score': board.white_score,
+            'black_score': board.black_score,
+
         }
         self.send(board_subscriber_client, 'update_board', data)
 
@@ -184,14 +209,12 @@ class Controller(object):
         Automatically discards invalid connections.
         """
         try:
-            #  app.logger.info(u'send to client: {}'.format(client))
             message = {
                 'action': action,
                 'data': data,
             }
-            print 'sent to {0}: {1}'.format(client, message)
-            client.send(json.dumps(message))
-        except Exception:
-            pass
-            #  app.logger.info(u'Exception on sending to client: {}'.format(client))
+            self.logger.info('sent to {0}: {1}'.format(client, message))
+            client.send(ujson.dumps(message))
+        except Exception, e:
+            self.logger.info(u'Exception on sending to client: {} {}'.format(client, e.message))
             #  self.clients.remove(client)
