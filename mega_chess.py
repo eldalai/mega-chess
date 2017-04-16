@@ -17,11 +17,15 @@ from controller import Controller
 REDIS_URL = os.environ['REDIS_URL']
 
 app = Flask(__name__)
-app.debug = 'DEBUG' in os.environ
+
+if 'DEBUG' in os.environ:
+    app.debug = True
+    from gevent import monkey
+    monkey.patch_all(thread=False)
 
 sockets = Sockets(app)
 redisPool = redis.from_url(url=REDIS_URL, db=0)
-controller = Controller(redisPool)
+controller = Controller(redisPool, app)
 
 
 @app.route('/')
@@ -42,7 +46,6 @@ def random():
 @sockets.route('/service')
 def inbox(ws):
     app.logger.info(u'Receive from {}...'.format(ws))
-
     """Receives incoming chat messages"""
     while not ws.closed:
         # Sleep to prevent *constant* context-switches.

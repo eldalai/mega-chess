@@ -16,15 +16,17 @@ class InvalidAuthLoginException(UserException):
 
 class UserManager(object):
 
-    def __init__(self, redis_pool):
+    def __init__(self, redis_pool, app):
         super(UserManager, self).__init__()
         self.redis_pool = redis_pool
+        self.app = app
         self.users = {}
 
     def _user_id(self, username):
         return 'user:{}'.format(username)
 
     def _save_user(self, username, password):
+        self.app.logger.info('_save_user username: {}'.format(username))
         try:
             hash_password = bcrypt.hashpw(
                 password.encode('utf-8'), bcrypt.gensalt())
@@ -35,6 +37,7 @@ class UserManager(object):
             })
             self.redis_pool.set(self._user_id(username), user)
         except Exception as e:
+            self.app.logger.info('_save_user username: {} Exception'.format(username))
             raise e
 
     def _is_password_valid(self, password, user):
@@ -42,8 +45,11 @@ class UserManager(object):
                               user['password'].encode('utf-8'))
 
     def register(self, username, password):
-        if self.redis_pool.exists(self._user_id(username)):
+        self.app.logger.info('register username: {}'.format(username))
+        if self.redis_pool.get(self._user_id(username)):
+            self.app.logger.info('register username: {} UserAlreadyExistsException'.format(username))
             raise UserAlreadyExistsException()
+        self.app.logger.info('register username: {} ok'.format(username))
         self._save_user(username, password)
         return True
 
