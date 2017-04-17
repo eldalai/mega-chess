@@ -86,6 +86,7 @@ service.onmessage = function(message) {
       }
 
     }
+    $('#link-view-board')[0].href = "/view?board_id=" + data.data.board_id;
     $('#input-move-board-id')[0].value = data.data.board_id;
     $('#input-move-turn-token')[0].value = data.data.turn_token;
     $("#input-move-from-row")[0].value = selectedPiece.row;
