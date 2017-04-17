@@ -74,8 +74,8 @@ service.onmessage = function(message) {
     //alert('it is your turn with ' + data.data.color);
     selectedPiece = null;
     while(!selectedPiece) {
-      console.log('selecting Piece');
-      if(data.data.color === 'white') {
+      console.log('selecting Piece!');
+      if(data.data.actual_turn === 'white') {
         pieces = boards[data.data.board_id].white_pieces
       } else {
         pieces = boards[data.data.board_id].black_pieces
@@ -91,7 +91,7 @@ service.onmessage = function(message) {
     $("#input-move-from-row")[0].value = selectedPiece.row;
     $("#input-move-from-col")[0].value = selectedPiece.col;
       console.log('piece_strategy Piece');
-    posible_move = selectedPiece.piece_strategy(data.data.color, selectedPiece.row, selectedPiece.col);
+    posible_move = selectedPiece.piece_strategy(data.data.actual_turn, selectedPiece.row, selectedPiece.col);
       console.log('piece_strategy Piece done');
     $("#input-move-to-row")[0].value = posible_move.to_row;
     $("#input-move-to-col")[0].value = posible_move.to_col;
