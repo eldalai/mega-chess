@@ -1,6 +1,9 @@
 import gevent
+from gevent.pool import Pool
 import json
 import random
+import traceback
+import ujson
 
 from users import UserManager
 from manager import ChessManager
@@ -42,7 +45,9 @@ class Controller(object):
         self.board_subscribers = {}
         self.redis_pool = redis_pool
         self.app = app
-        self.notify_next_turn()
+        # self.notify_next_turn()
+        self.pool = Pool(10)
+        # self.pool.start()
 
     def execute_message(self, client, message):
         try:
@@ -57,7 +62,6 @@ class Controller(object):
             return result
         except Exception, e:
             #  TODO: change exception...
-            import traceback
             tb = traceback.format_exc()
             self.app.logger.error('exception {} {}'.format(e, tb))
 
@@ -144,6 +148,7 @@ class Controller(object):
         board_id = data['board_id']
         turn_token, username, actual_turn, board = self.chess_manager.challenge_accepted(board_id)
         next_turn_data = {
+            'board_id': board_id,
             'turn_token': turn_token,
             'username': username,
             'actual_turn': actual_turn,
@@ -165,37 +170,38 @@ class Controller(object):
                 to_col=data['to_col'],
             )
             next_turn_data = {
+                'board_id': board_id,
                 'turn_token': turn_token,
                 'username': username,
                 'actual_turn': actual_turn,
                 'board': board,
             }
+            self.app.logger.info('action_move ok'.format(board_id, next_turn_data))
             processed = True
-        except Exception:
+        except Exception, e:
+            tb = traceback.format_exc()
+            self.app.logger.error('action_move {} exception  {} {}'.format(board_id, e, tb))
             turn_token, username, actual_turn, board = self.chess_manager._next_turn_token(board_id)
             next_turn_data = {
+                'board_id': board_id,
                 'turn_token': turn_token,
                 'username': username,
                 'actual_turn': actual_turn,
                 'board': board,
             }
-
-        self.enqueue_next_turn("{}:{}".format(board_id, next_turn_data['turn_token']))
-
+        self.set_next_turn(board_id, next_turn_data)
 
     def set_next_turn(self, board_id, next_turn_data):
         self.app.logger.info('set_next_turn {} {}'.format(board_id, next_turn_data))
-        self.redis_pool.set(
-            "{}:{}".format(board_id, next_turn_data['turn_token']),
-            next_turn_data)
-
-        self.enqueue_next_turn("{}:{}".format(board_id, next_turn_data['turn_token']))
+        key = "{}:{}".format(board_id, next_turn_data['turn_token'])
+        self.redis_pool.set(key, ujson.dumps(next_turn_data))
+        self.enqueue_next_turn(key)
 
     def enqueue_next_turn(self, key):
         self.app.logger.info('enqueue_next_turn {}'.format(key))
         self.redis_pool.rpush(
             "next_turn_queue", key)
-
+        self.pool.spawn(self.process_next_turn, key)
         # self.notify_next_turn(
         #     board_id,
         #     *next_turn_data
@@ -218,6 +224,32 @@ class Controller(object):
         # for next_client in self.user_manager.get_clients_by_username(username):
         #     self.send(next_client, 'your_turn', data)
 
+    def process_next_turn(self, key):
+        self.app.logger.info('process_next_turn {}'.format(key))
+        try:
+            # key = self.redis_pool.blpop('next_turn_queue')
+            if not key:
+                self.app.logger.info('Nothing pending to process')
+                return
+            data = ujson.loads(self.redis_pool.get(key))
+
+            self.app.logger.info('next_turn key: {} data: {}'.format(key, data))
+            username = data['username']
+            for next_client in self.user_manager.get_clients_by_username(username):
+                self.send(next_client, 'your_turn', data)
+
+            self.notify_to_board_subscribers(data['board_id'])
+        except Exception as e:
+            tb = traceback.format_exc()
+            self.app.logger.error('process_next_turn {} exception  {} {}'.format(key, e, tb))
+            # retry
+            # if key:
+            #     self.enqueue_next_turn(key)
+        self.app.logger.info('end process_next_turn {}'.format(key))
+
+
+
+
     def _next_turn(self, worker_id):
         while True:
             gevent.sleep(1000)
@@ -227,7 +259,7 @@ class Controller(object):
                 if not key:
                     self.app.logger.info('Nothing pending to process')
                     continue
-                data = self.redis_pool.get(key)
+                data = ujson.loads(self.redis_pool.get(key))
                 self.notify_to_board_subscribers(data['board_id'])
                 for next_client in self.user_manager.get_clients_by_username(data['username']):
                     self.send(next_client, 'your_turn', data)

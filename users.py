@@ -97,6 +97,8 @@ class UserManager(object):
 
     def get_clients_by_username(self, username):
         if username in self.users:
-            return self.users[username]['clients']
+            clients = self.users[username]['clients']
+            self.app.logger.info('get_clients_by_username username {} {}'.format(username, clients))
+            return clients
         else:
             return []
