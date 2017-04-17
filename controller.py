@@ -37,6 +37,10 @@ class InvalidRegisterException(ControllerExcetions):
     pass
 
 
+class TimeoutException(ControllerExcetions):
+    pass
+
+
 class Controller(object):
 
     def __init__(self, redis_pool, app):
@@ -46,7 +50,7 @@ class Controller(object):
         self.redis_pool = redis_pool
         self.app = app
         # self.notify_next_turn()
-        self.pool = Pool(10)
+        self.pool = Pool(1000)
         # self.pool.start()
 
     def execute_message(self, client, message):
@@ -160,6 +164,16 @@ class Controller(object):
 
     def action_move(self, client, data):
         board_id = data['board_id']
+        turn_token = data['turn_token']
+        key = self.get_next_turn_key(board_id, turn_token)
+        self.app.logger.info('action_move control timeout {}'.format(key))
+        if self.redis_pool.exists(key):
+            self.app.logger.info('action_move control timeout OK {}'.format(key))
+            self.redis_pool.delete(key)
+        else:
+            # timeout...
+            self.app.logger.info('action_move control timeout ERROR {}'.format(key))
+            raise TimeoutException()
         processed = False
         try:
             turn_token, username, actual_turn, board = self.chess_manager.move_with_turn_token(
@@ -191,38 +205,33 @@ class Controller(object):
             }
         self.set_next_turn(board_id, next_turn_data)
 
+    def get_next_turn_key(self, board_id, turn_token):
+        return "next_turn:{}:{}".format(board_id, turn_token)
+
     def set_next_turn(self, board_id, next_turn_data):
         self.app.logger.info('set_next_turn {} {}'.format(board_id, next_turn_data))
-        key = "{}:{}".format(board_id, next_turn_data['turn_token'])
+        key = self.get_next_turn_key(board_id, next_turn_data['turn_token'])
         self.redis_pool.set(key, ujson.dumps(next_turn_data))
         self.enqueue_next_turn(key)
 
     def enqueue_next_turn(self, key):
         self.app.logger.info('enqueue_next_turn {}'.format(key))
-        self.redis_pool.rpush(
-            "next_turn_queue", key)
+        # self.redis_pool.rpush("next_turn_queue", key)
+        self.pool.wait_available()
         self.pool.spawn(self.process_next_turn, key)
-        # self.notify_next_turn(
-        #     board_id,
-        #     *next_turn_data
-        # )
 
-        # return processed
-
-    def notify_next_turn(self):
-        threads = []
-        for i in range(1, 10):
-            threads.append(
-                gevent.spawn(self._next_turn, i))
-        # data = {
-        #     'turn_token': turn_token,
-        #     'board_id': board_id,
-        #     'color': color,
-        #     'board': board,
-        # }
-        # self.notify_to_board_subscribers(board_id)
-        # for next_client in self.user_manager.get_clients_by_username(username):
-        #     self.send(next_client, 'your_turn', data)
+    def force_change_turn(self, board_id, turn_token):
+        self.app.logger.info('force_change_turn {} {}'.format(board_id, turn_token))
+        turn_token, username, actual_turn, board = self.chess_manager.force_change_turn(board_id, turn_token)
+        next_turn_data = {
+                'board_id': board_id,
+                'turn_token': turn_token,
+                'username': username,
+                'actual_turn': actual_turn,
+                'board': board,
+        }
+        self.app.logger.info('force_change_turn set_next_turn {} {}'.format(board_id, turn_token))
+        self.set_next_turn(board_id, next_turn_data)
 
     def process_next_turn(self, key):
         self.app.logger.info('process_next_turn {}'.format(key))
@@ -237,8 +246,14 @@ class Controller(object):
             username = data['username']
             for next_client in self.user_manager.get_clients_by_username(username):
                 self.send(next_client, 'your_turn', data)
-
             self.notify_to_board_subscribers(data['board_id'])
+            # control timeout
+            gevent.sleep(10)
+            self.app.logger.info('Checking timeout {} {}'.format(data['board_id'], data['turn_token']))
+            if self.redis_pool.exists(key):
+                self.app.logger.info('Forcing timeout {} {}'.format(data['board_id'], data['turn_token']))
+                self.redis_pool.delete(key)
+                self.force_change_turn(data['board_id'], data['turn_token'])
         except Exception as e:
             tb = traceback.format_exc()
             self.app.logger.error('process_next_turn {} exception  {} {}'.format(key, e, tb))
@@ -246,28 +261,6 @@ class Controller(object):
             # if key:
             #     self.enqueue_next_turn(key)
         self.app.logger.info('end process_next_turn {}'.format(key))
-
-
-
-
-    def _next_turn(self, worker_id):
-        while True:
-            gevent.sleep(1000)
-            self.app.logger.info('processing _next_turn {}'.format(worker_id))
-            try:
-                key = self.redis_pool.blpop('next_turn_queue')
-                if not key:
-                    self.app.logger.info('Nothing pending to process')
-                    continue
-                data = ujson.loads(self.redis_pool.get(key))
-                self.notify_to_board_subscribers(data['board_id'])
-                for next_client in self.user_manager.get_clients_by_username(data['username']):
-                    self.send(next_client, 'your_turn', data)
-            except Exception as e:
-                if key:
-                    self.enqueue_next_turn(key)
-        self.app.logger.info('end _next_turn {}'.format(worker_id))
-
 
     def notify_to_board_subscribers(self, board_id):
         board = self.chess_manager.get_board_by_id(board_id)

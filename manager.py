@@ -2,6 +2,7 @@ import uuid
 
 from pychess.chess import (
     Bishop,
+    BLACK,
     BoardFactory,
     Horse,
     King,
@@ -138,4 +139,13 @@ class ChessManager(object):
     def move_with_turn_token(self, turn_token, from_row, from_col, to_row, to_col):
         board_id = self.get_board_id_by_turn_token(turn_token)
         self.move(board_id, from_row, from_col, to_row, to_col)
+        return self._next_turn_token(board_id, turn_token)
+
+    def force_change_turn(self, board_id, turn_token):
+        board = self.get_board_by_id(board_id)
+        board.penalize_score(board.board.actual_turn)
+        if board.board.actual_turn == WHITE:
+            board.board.actual_turn = BLACK
+        else:
+            board.board.actual_turn = WHITE
         return self._next_turn_token(board_id, turn_token)
