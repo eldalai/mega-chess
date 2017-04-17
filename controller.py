@@ -1,6 +1,5 @@
 import gevent
 from gevent.pool import Pool
-import json
 import random
 import traceback
 import ujson
@@ -38,6 +37,10 @@ class InvalidRegisterException(ControllerExcetions):
 
 
 class TimeoutException(ControllerExcetions):
+    pass
+
+
+class InvalidSaveTurnException(object):
     pass
 
 
@@ -84,7 +87,7 @@ class Controller(object):
 
     def parse_message(self, message):
         try:
-            job = json.loads(message)
+            job = ujson.loads(message)
         except ValueError:
             raise InvalidActionFormatException()
 
@@ -213,12 +216,24 @@ class Controller(object):
         key = self.get_next_turn_key(board_id, next_turn_data['turn_token'])
         self.redis_pool.set(key, ujson.dumps(next_turn_data))
         self.enqueue_next_turn(key)
+        # if not self._save_turn(next_turn_data):
+        #     raise InvalidSaveTurnException()
 
     def enqueue_next_turn(self, key):
         self.app.logger.info('enqueue_next_turn {}'.format(key))
         # self.redis_pool.rpush("next_turn_queue", key)
         self.pool.wait_available()
         self.pool.spawn(self.process_next_turn, key)
+
+    def _save_turn(self, data):
+        try:
+            data_json = ujson.dumps(data)
+            self.redis_pool.set(
+                "{0}:{1}".format('turn', data['turn_token']),
+                data_json)
+            return True
+        except Exception:
+            return False
 
     def force_change_turn(self, board_id, turn_token):
         self.app.logger.info('force_change_turn {} {}'.format(board_id, turn_token))
@@ -299,7 +314,7 @@ class Controller(object):
                 'data': data,
             }
             # print 'sent to {0}: {1}'.format(client, message)
-            client.send(json.dumps(message))
+            client.send(ujson.dumps(message))
         except Exception:
             pass
             #  app.logger.info(u'Exception on sending to client: {}'.format(client))

@@ -19,8 +19,8 @@ var pieces_strategy = {
     'H': null,
     'b': null,
     'B': null,
-    'q': null,
-    'Q': null
+    'q': moveQueen,
+    'Q': moveQueen
 };
 var processing = false;
 
@@ -177,6 +177,16 @@ function moveRook(color, from_row, from_col) {
     return { to_row: from_row, to_col: from_col + random(16) * ( random(3) - 1 ) };
   }
 }
+
+function moveQueen(color, from_row, from_col) {
+   distance = random(8);
+   vertical = random(3) - 1;
+   horizontal = random(3) - 1;
+   return {
+     to_row: from_row + (distance * vertical),
+     to_col: from_col + (distance * horizontal)
+   }
+ }
 
 function verifySubscribeBoard(board_id) {
   if(board_id) {

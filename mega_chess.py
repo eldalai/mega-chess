@@ -24,8 +24,8 @@ if 'DEBUG' in os.environ:
     monkey.patch_all(thread=False)
 
 sockets = Sockets(app)
-redisPool = redis.from_url(url=REDIS_URL, db=0)
-controller = Controller(redisPool, app)
+redis_pool = redis.from_url(url=REDIS_URL, db=0)
+controller = Controller(redis_pool, app)
 
 
 @app.route('/')
