@@ -14,10 +14,12 @@ from pychess.chess import (
     WHITE,
 )
 
+INVALID_MOVE = 'invalid_move'
 score_by_action = {
     RESULT_MOVE: 1,
     RESULT_EAT: 10,
     RESULT_PROMOTE: 50,
+    INVALID_MOVE: -1,
 }
 
 score_by_piece = {
@@ -52,12 +54,17 @@ class PlayingBoard(object):
         self.white_score = 0
         self.black_score = 0
 
-    def add_score(self, color, action, piece):
-        score = score_by_action[action] * score_by_piece[piece]
+    def _apply_score(self, color, score):
         if color == WHITE:
             self.white_score += score
         else:
             self.black_score += score
+
+    def penalize_score(self, color):
+        self._apply_score(color, score_by_action[INVALID_MOVE])
+
+    def add_score(self, color, action, piece):
+        self._apply_score(color, score_by_action[action] * score_by_piece[piece])
 
 
 class ChessManager(object):
@@ -116,13 +123,17 @@ class ChessManager(object):
     def move(self, board_id, from_row, from_col, to_row, to_col):
         board = self.get_board_by_id(board_id)
         color = board.board.actual_turn
-        action, piece = board.board.move(
-            from_row,
-            from_col,
-            to_row,
-            to_col,
-        )
-        board.add_score(color, action, piece)
+        try:
+            action, piece = board.board.move(
+                from_row,
+                from_col,
+                to_row,
+                to_col,
+            )
+            board.add_score(color, action, piece)
+        except Exception as e:
+            board.penalize_score(color)
+            raise e
 
     def move_with_turn_token(self, turn_token, from_row, from_col, to_row, to_col):
         board_id = self.get_board_id_by_turn_token(turn_token)
