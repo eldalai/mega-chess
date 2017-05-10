@@ -39,7 +39,7 @@ class TestChessManager(unittest.TestCase):
         board = self.manager.get_board_by_id(self.board_id)
         self.assertIsNotNone(board)
         self.assertEqual(board.board.actual_turn, WHITE)
-        self.assertEqual(board.white_score, 0)
+        self.assertEqual(board.white_score, -1)
         self.assertEqual(board.black_score, 0)
 
     def test_move(self):
