@@ -47,6 +47,10 @@ class InvalidSaveTurnException(object):
     pass
 
 
+TURN_TOKEN_EXPIRATION = 10
+TURN_TOKEN_EXPIRATION_GRACE_PERIOD = 20
+
+
 class Controller(object):
 
     def __init__(self, redis_pool, app):
@@ -224,7 +228,7 @@ class Controller(object):
     def set_next_turn(self, board_id, next_turn_data):
         self.app.logger.info('set_next_turn {} {}'.format(board_id, next_turn_data))
         key = self.get_next_turn_key(board_id, next_turn_data['turn_token'])
-        self.redis_pool.set(key, ujson.dumps(next_turn_data))
+        self.redis_pool.set(key, ujson.dumps(next_turn_data), ex=TURN_TOKEN_EXPIRATION_GRACE_PERIOD)
         self.enqueue_next_turn(key)
         # if not self._save_turn(next_turn_data):
         #     raise InvalidSaveTurnException()
@@ -277,7 +281,7 @@ class Controller(object):
                 self.send(next_client, 'your_turn', data)
             self.notify_to_board_subscribers(data['board_id'])
             # control timeout
-            gevent.sleep(10)
+            gevent.sleep(TURN_TOKEN_EXPIRATION)
             self.app.logger.info('Checking timeout {} {}'.format(data['board_id'], data['turn_token']))
             if self.redis_pool.exists(key):
                 self.app.logger.info('Forcing timeout {} {}'.format(data['board_id'], data['turn_token']))

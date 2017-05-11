@@ -102,3 +102,7 @@ Mega Chess is *like* a Chess
 
 * sent to **client 1**: {'action': 'your_turn', 'data': {'board_id': u'b65e2ac2-7cc5-4257-a6b0-cc656c9a1742', 'turn_token': '32dcdab9-a4be-49ab-bae2-2a4aa53ef9ee'}}
 
+### When the game is over
+
+* sent to both players: {"action":"game_over","data":{"black_score":16,"white_score":28,"winner":"vadim","black_username":"gabriel","board":"B*1234567890123456*\n1|rrhhbbqqkkbbhhrr|\n2|rrhhbbqqkkbbhhrr|\n3|ppppppppp pppppp|\n4|  ppp ppppp pppp|\n5|pp   p   p p    |\n6|                |\n7|                |\n8|                |\n9|                |\n0|                |\n1|        P       |\n2|P  P P P        |\n3| PP P P PPPPPPPP|\n4|PPPPPPPP PPPPPPP|\n5|RRHHBBQQKKBBHHRR|\n6|RRHHBBQQKKBBHHRR|\nW*----------------*\n","white_username":"vadim"}}
+
