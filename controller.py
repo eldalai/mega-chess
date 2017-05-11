@@ -5,7 +5,10 @@ import traceback
 import ujson
 
 from users import UserManager
-from manager import ChessManager
+from manager import (
+    ChessManager,
+    GameOverException,
+)
 
 
 class ControllerExcetions(Exception):
@@ -44,10 +47,14 @@ class InvalidSaveTurnException(object):
     pass
 
 
+TURN_TOKEN_EXPIRATION = 10
+TURN_TOKEN_EXPIRATION_GRACE_PERIOD = 20
+
+
 class Controller(object):
 
     def __init__(self, redis_pool, app):
-        self.chess_manager = ChessManager()
+        self.chess_manager = ChessManager(redis_pool)
         self.user_manager = UserManager(redis_pool, app)
         self.board_subscribers = {}
         self.redis_pool = redis_pool
@@ -195,10 +202,17 @@ class Controller(object):
             }
             self.app.logger.info('action_move ok'.format(board_id, next_turn_data))
             processed = True
+        except GameOverException:
+            self.send_game_over(board_id)
+            return
         except Exception, e:
             tb = traceback.format_exc()
             self.app.logger.error('action_move {} exception  {} {}'.format(board_id, e, tb))
-            turn_token, username, actual_turn, board = self.chess_manager._next_turn_token(board_id)
+            try:
+                turn_token, username, actual_turn, board = self.chess_manager._next_turn_token(board_id)
+            except GameOverException:
+                self.send_game_over(board_id)
+                return
             next_turn_data = {
                 'board_id': board_id,
                 'turn_token': turn_token,
@@ -214,7 +228,7 @@ class Controller(object):
     def set_next_turn(self, board_id, next_turn_data):
         self.app.logger.info('set_next_turn {} {}'.format(board_id, next_turn_data))
         key = self.get_next_turn_key(board_id, next_turn_data['turn_token'])
-        self.redis_pool.set(key, ujson.dumps(next_turn_data))
+        self.redis_pool.set(key, ujson.dumps(next_turn_data), ex=TURN_TOKEN_EXPIRATION_GRACE_PERIOD)
         self.enqueue_next_turn(key)
         # if not self._save_turn(next_turn_data):
         #     raise InvalidSaveTurnException()
@@ -237,7 +251,11 @@ class Controller(object):
 
     def force_change_turn(self, board_id, turn_token):
         self.app.logger.info('force_change_turn {} {}'.format(board_id, turn_token))
-        turn_token, username, actual_turn, board = self.chess_manager.force_change_turn(board_id, turn_token)
+        try:
+            turn_token, username, actual_turn, board = self.chess_manager.force_change_turn(board_id, turn_token)
+        except GameOverException:
+            self.send_game_over(board_id)
+            return
         next_turn_data = {
                 'board_id': board_id,
                 'turn_token': turn_token,
@@ -263,7 +281,7 @@ class Controller(object):
                 self.send(next_client, 'your_turn', data)
             self.notify_to_board_subscribers(data['board_id'])
             # control timeout
-            gevent.sleep(10)
+            gevent.sleep(TURN_TOKEN_EXPIRATION)
             self.app.logger.info('Checking timeout {} {}'.format(data['board_id'], data['turn_token']))
             if self.redis_pool.exists(key):
                 self.app.logger.info('Forcing timeout {} {}'.format(data['board_id'], data['turn_token']))
@@ -301,6 +319,22 @@ class Controller(object):
         self.board_subscribers[board_id].append(client)
         self.notify_board_update(client, board)
         return True
+
+    def send_game_over(self, board_id):
+        board = self.chess_manager.get_board_by_id(board_id)
+        data = {
+            'board': str(board.board),
+            'white_username': board.white_username,
+            'black_username': board.black_username,
+            'white_score': board.white_score,
+            'black_score': board.black_score,
+            'winner': board.winner,
+        }
+        for next_client in (
+            self.user_manager.get_clients_by_username(board.white_username) +
+            self.user_manager.get_clients_by_username(board.black_username)
+        ):
+            self.send(next_client, 'game_over', data)
 
     def send(self, client, action, data):
         """

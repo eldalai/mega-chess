@@ -1,4 +1,6 @@
 import unittest
+import fakeredis
+
 from pychess.chess import (
     BLACK,
     WHITE,
@@ -16,7 +18,7 @@ class TestChessManager(unittest.TestCase):
 
     def setUp(self):
         super(TestChessManager, self).setUp()
-        self.manager = ChessManager()
+        self.manager = ChessManager(fakeredis.FakeStrictRedis())
         self.board_id = self.manager.create_board(
             white_username='white',
             black_username='black',
@@ -39,7 +41,7 @@ class TestChessManager(unittest.TestCase):
         board = self.manager.get_board_by_id(self.board_id)
         self.assertIsNotNone(board)
         self.assertEqual(board.board.actual_turn, WHITE)
-        self.assertEqual(board.white_score, 0)
+        self.assertEqual(board.white_score, -1)
         self.assertEqual(board.black_score, 0)
 
     def test_move(self):
