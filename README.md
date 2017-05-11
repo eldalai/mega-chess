@@ -2,6 +2,8 @@
 
 Mega Chess is variation of Chess designed to be played by computer programs using code
 
+[![Build Status](https://travis-ci.org/megachess/mega-chess.svg?branch=master)](https://travis-ci.org/megachess/mega-chess)
+
 ## How to play
 
 You can use any programming lenguage, you only need to use a web socket client in order to send the command to the server.
