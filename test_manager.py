@@ -1,4 +1,6 @@
 import unittest
+import fakeredis
+
 from pychess.chess import (
     BLACK,
     WHITE,
@@ -16,7 +18,7 @@ class TestChessManager(unittest.TestCase):
 
     def setUp(self):
         super(TestChessManager, self).setUp()
-        self.manager = ChessManager()
+        self.manager = ChessManager(fakeredis.FakeStrictRedis())
         self.board_id = self.manager.create_board(
             white_username='white',
             black_username='black',

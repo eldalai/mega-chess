@@ -31,6 +31,7 @@ score_by_piece = {
     Queen.PIECE_LETTER: 70,
     King.PIECE_LETTER: 100,
 }
+TOTAL_GAME_TURNS = 100
 
 
 class ManagerException(Exception):
@@ -45,6 +46,10 @@ class InvalidTurnTokenException(ManagerException):
     pass
 
 
+class GameOverException(ManagerException):
+    pass
+
+
 class PlayingBoard(object):
 
     def __init__(self, board, white_username, black_username ):
@@ -54,6 +59,7 @@ class PlayingBoard(object):
         self.turn_token = None
         self.white_score = 0
         self.black_score = 0
+        self.turn_count = 0
 
     def _apply_score(self, color, score):
         if color == WHITE:
@@ -67,6 +73,21 @@ class PlayingBoard(object):
     def add_score(self, color, action, piece):
         self._apply_score(color, score_by_action[action] * score_by_piece[piece])
 
+    def next_turn(self):
+        self.turn_count += 1
+        if self.turn_count >= TOTAL_GAME_TURNS:
+            raise GameOverException()
+        self.turn_token = str(uuid.uuid4())
+        return self.turn_token
+
+    @property
+    def winner(self):
+        if self.black_score > self.white_score:
+            return self.black_username
+        elif self.black_score < self.white_score:
+            return self.white_username
+        return 'draw'
+
 
 class ChessManager(object):
     '''
@@ -75,17 +96,16 @@ class ChessManager(object):
     TODO: Store/Retrieve boards from DB
     '''
 
-    def __init__(self):
-        super(ChessManager, self).__init__()
+    def __init__(self, redis_pool):
+        self.redis_pool = redis_pool
         self.boards = {}
         self.turns = {}
 
     def _next_turn_token(self, board_id, previous_turn_token=None):
         if previous_turn_token and previous_turn_token in self.turns:
             del self.turns[previous_turn_token]
-        turn_token = str(uuid.uuid4())
         board = self.get_board_by_id(board_id)
-        board.turn_token = turn_token
+        turn_token = board.next_turn()
         self.turns[turn_token] = board_id
         return (
             turn_token,
