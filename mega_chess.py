@@ -8,6 +8,7 @@ This simple application uses WebSockets to run a primitive chat server.
 """
 import os
 import redis
+import fakeredis
 import gevent
 from flask import Flask, render_template
 from flask_sockets import Sockets
@@ -24,8 +25,9 @@ if 'DEBUG' in os.environ:
     monkey.patch_all(thread=False)
 
 sockets = Sockets(app)
-redis_pool = redis.from_url(url=REDIS_URL, db=0)
-controller = Controller(redis_pool, app)
+# redis_pool = redis.from_url(url=REDIS_URL, db=0)
+# controller = Controller(redis_pool, app)
+controller = Controller(fakeredis.FakeStrictRedis(), app)
 
 
 @app.route('/')

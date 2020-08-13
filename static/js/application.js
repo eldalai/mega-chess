@@ -46,6 +46,11 @@ service.onmessage = function(message) {
     $('#input-move-board-id')[0].value = data.data.board_id;
     $('#input-move-turn-token')[0].value = data.data.turn_token;
   }
+  if(data.action == 'tournament_created') {
+    alert('tournament created ' + data.data.id);    
+    $('#input-add-user-tournament-tournament-id')[0].value = data.data.id;
+    $('#input-start-tournament-tournament-id')[0].value = data.data.id;
+  }
 };
 
 
@@ -106,6 +111,28 @@ $("#login-form").on("submit", function(event) {
   }
 });
 
+$("#create-tournament-form").on("submit", function(event) {
+  event.preventDefault();
+  send('create_tournament', {});
+});
+
+$("#add-user-tournament-form").on("submit", function(event) {
+  event.preventDefault();
+  var username   = $("#input-user-add-tournament-username")[0].value;
+  var tournament_id   = $("#input-add-user-tournament-tournament-id")[0].value;
+  send('add_user_to_tournament', {
+    username: username,
+    tournament_id: tournament_id
+  });
+});
+
+$("#start-tournament-form").on("submit", function(event) {
+  event.preventDefault();
+  var tournament_id   = $("#input-start-tournament-tournament-id")[0].value;
+  send('start_tournament', {
+    tournament_id: tournament_id
+  });
+});
 function send(action, data) {
     service.send(JSON.stringify({
       action: action,

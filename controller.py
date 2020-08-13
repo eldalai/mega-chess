@@ -1,11 +1,12 @@
-import gevent
-from gevent.pool import Pool
+# import gevent
+# from gevent.pool import Pool
 import random
 import traceback
 import ujson
 
 from users import UserManager
 from manager import ChessManager
+from tournaments import TournamentManager
 
 
 class ControllerExcetions(Exception):
@@ -49,11 +50,12 @@ class Controller(object):
     def __init__(self, redis_pool, app):
         self.chess_manager = ChessManager()
         self.user_manager = UserManager(redis_pool, app)
+        self.tournament_manager = TournamentManager(redis_pool, self.chess_manager)
         self.board_subscribers = {}
         self.redis_pool = redis_pool
         self.app = app
         # self.notify_next_turn()
-        self.pool = Pool(1000)
+        # self.pool = Pool(1000)
         # self.pool.start()
 
     def execute_message(self, client, message):
@@ -67,7 +69,7 @@ class Controller(object):
             # gevent.spawn(
             self.send(client, 'response_ok', data)
             return result
-        except Exception, e:
+        except Exception as e:
             #  TODO: change exception...
             tb = traceback.format_exc()
             self.app.logger.error('exception {} {}'.format(e, tb))
@@ -153,6 +155,10 @@ class Controller(object):
 
     def action_accept_challenge(self, client, data):
         board_id = data['board_id']
+        self._start_board(board_id)
+        return True
+
+    def _start_board(self, board_id):
         turn_token, username, actual_turn, board = self.chess_manager.challenge_accepted(board_id)
         next_turn_data = {
             'board_id': board_id,
@@ -163,7 +169,6 @@ class Controller(object):
         }
         self.app.logger.info('action_accept_challenge ok'.format(board_id, next_turn_data))
         self.set_next_turn(board_id, next_turn_data)
-        return True
 
     def action_move(self, client, data):
         board_id = data['board_id']
@@ -195,7 +200,7 @@ class Controller(object):
             }
             self.app.logger.info('action_move ok'.format(board_id, next_turn_data))
             processed = True
-        except Exception, e:
+        except Exception as e:
             tb = traceback.format_exc()
             self.app.logger.error('action_move {} exception  {} {}'.format(board_id, e, tb))
             turn_token, username, actual_turn, board = self.chess_manager._next_turn_token(board_id)
@@ -222,8 +227,9 @@ class Controller(object):
     def enqueue_next_turn(self, key):
         self.app.logger.info('enqueue_next_turn {}'.format(key))
         # self.redis_pool.rpush("next_turn_queue", key)
-        self.pool.wait_available()
-        self.pool.spawn(self.process_next_turn, key)
+        # self.pool.wait_available()
+        # self.pool.spawn(self.process_next_turn, key)
+        self.process_next_turn(key)
 
     def _save_turn(self, data):
         try:
@@ -263,7 +269,7 @@ class Controller(object):
                 self.send(next_client, 'your_turn', data)
             self.notify_to_board_subscribers(data['board_id'])
             # control timeout
-            gevent.sleep(10)
+            # gevent.sleep(10)
             self.app.logger.info('Checking timeout {} {}'.format(data['board_id'], data['turn_token']))
             if self.redis_pool.exists(key):
                 self.app.logger.info('Forcing timeout {} {}'.format(data['board_id'], data['turn_token']))
@@ -319,3 +325,29 @@ class Controller(object):
             pass
             #  app.logger.info(u'Exception on sending to client: {}'.format(client))
             #  self.clients.remove(client)
+
+    def action_create_tournament(self, client, data):
+        tournament = self.tournament_manager.create_tournament()
+        self.send(client, 'tournament_created', tournament)
+        return True
+
+    def action_add_user_to_tournament(self, client, data):
+        tournament_id = data['tournament_id']
+        username = data['username']
+        self.tournament_manager.add_user(tournament_id, username)
+        users = self.tournament_manager.get_users(tournament_id)
+        self.send(client, 'user_added_to_tournament', users)
+        return True
+
+    def action_start_tournament(self, client, data):
+        tournament_id = data['tournament_id']
+        import ipdb; ipdb.set_trace()
+        tournament = self.tournament_manager.get_tournament(tournament_id)
+        # TODO: control and change state...
+        boards = self.tournament_manager.start(tournament_id)
+        for board_id in boards:
+            self._start_board(board_id)
+        users = self.tournament_manager.get_users(tournament_id)
+
+        self.send(client, 'tournament_started', users)
+        return True
