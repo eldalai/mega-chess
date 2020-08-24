@@ -1,1 +1,1 @@
-web: hypercorn mega_chess:app --bind 127.0.0.1:80
+web: hypercorn mega_chess:app --bind 0.0.0.0:${PORT}

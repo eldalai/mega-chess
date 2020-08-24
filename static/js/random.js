@@ -39,10 +39,7 @@ var processing = false;
 
 service.onopen = function() {
   console.log('service open');
-  service.send(JSON.stringify({
-    action: 'login',
-    data: {}
-  }));
+  send('login', {});
 };
 
 service.onclose = function(){

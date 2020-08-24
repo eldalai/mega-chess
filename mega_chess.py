@@ -116,7 +116,6 @@ async def service(queue):
         while True:
             message = await websocket.receive()
             # await websocket.send("Receive ")
-            # import ipdb; ipdb.set_trace()
             if message:
                 app.logger.info(u'Receive from {}...{}'.format(websocket, queue))
                 # import ipdb; ipdb.set_trace()
@@ -124,11 +123,6 @@ async def service(queue):
                     u'Processing message: {} from: {}'.format(message, websocket),
                 )
                 asyncio.create_task(controller.execute_message(websocket, message))
-                # while True:
-                #     if hasattr(websocket, 'username'):
-                #         queue.username = websocket.username
-                #     data = await queue.get()
-                #     await websocket.send(data)
 
     except asyncio.CancelledError:
         # Handle disconnect
@@ -145,27 +139,6 @@ async def broadcast(websocket, queue):
     except asyncio.CancelledError:
         # Handle disconnect
         raise
-
-
-# @app.websocket('/service')
-# async def inbox():
-#     # websocket.headers
-#     # import ipdb; ipdb.set_trace()
-#     try:
-#         message = await websocket.receive()
-#         app.logger.info(u'Receive from {}...'.format(websocket))
-#         # await websocket.send("Receive ")
-#         # import ipdb; ipdb.set_trace()
-#         if message:
-#             # import ipdb; ipdb.set_trace()
-#             app.logger.info(
-#                 u'Processing message: {} from: {}'.format(message, websocket),
-#             )
-#             asyncio.create_task(controller.execute_message(websocket, message))
-
-#     except asyncio.CancelledError:
-#         # Handle disconnect
-#         raise
 
 
 if __name__ == '__main__':
