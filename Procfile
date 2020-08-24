@@ -1,1 +1,1 @@
-web: gunicorn -k flask_sockets.worker mega_chess:app
+web: hypercorn mega_chess:app
