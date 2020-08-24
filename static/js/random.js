@@ -1,11 +1,24 @@
+
+function getParameterByName(name, url) {
+    if (!url) url = window.location.href;
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+}
+
 // Support TLS-specific URLs, when appropriate.
 if (window.location.protocol == "https:") {
   var ws_scheme = "wss://";
 } else {
   var ws_scheme = "ws://"
 };
+var auth_token = getParameterByName('auth_token');
 
-var service = new ReconnectingWebSocket(ws_scheme + location.host + "/service");
+// var login = new ReconnectingWebSocket(ws_scheme + location.host + "/login?authtoken=" + auth_token);
+var service = new ReconnectingWebSocket(ws_scheme + location.host + "/service?authtoken=" + auth_token);
 var boards = {};
 
 var pieces_strategy = {
@@ -25,17 +38,11 @@ var pieces_strategy = {
 var processing = false;
 
 service.onopen = function() {
-  var username   = $("#input-login-username")[0].value;
-  var password   = $("#input-login-password")[0].value;
-  if(username && password) {
-    service.send(JSON.stringify({
-      action: 'login',
-      data: {
-        username: username,
-        password: password
-      }
-    }));
-  }
+  console.log('service open');
+  service.send(JSON.stringify({
+    action: 'login',
+    data: {}
+  }));
 };
 
 service.onclose = function(){
@@ -48,6 +55,13 @@ service.onmessage = function(message) {
   console.log(message.data)
   var data = JSON.parse(message.data);
 
+  if(data.action == 'gameover') {
+    alert(
+      'Game is Over! \n' + 
+      data.data.white_username + ": " + data.data.white_score + "\n" +
+      data.data.black_username + ": " + data.data.black_score
+    )
+  }
   if(data.action == 'update_user_list') {
     $("#input-challenge-user").empty();
     for( user in data.data.users_list ) {
@@ -244,17 +258,6 @@ $("#register-form").on("submit", function(event) {
   }
 });
 
-$("#login-form").on("submit", function(event) {
-  event.preventDefault();
-  var username   = $("#input-login-username")[0].value;
-  var password   = $("#input-login-password")[0].value;
-  if(username) {
-    send('login', {
-        username: username,
-        password: password
-    });
-  }
-});
 
 function send(action, data) {
     sendData = {

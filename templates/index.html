@@ -11,7 +11,7 @@
       <div class="jumbotron">
         <h1>Mega Chess</h1>
       </div>
-      <form id="register-form" class="form-inline">
+      <form id="register-form" action="register" class="form-inline">
         <div class="form-group">
           <input id="input-register-username" type="text" class="form-control" placeholder="Enter your username" autofocus />
         </div>
@@ -20,15 +20,21 @@
         </div>
         <button class="btn btn-primary" type="submit">Register</button>
       </form>
-      <form id="login-form" class="form-inline">
+      <form id="get-token-form" class="form-inline">
         <div class="form-group">
-          <input id="input-login-username" type="text" class="form-control" placeholder="Enter your username" autofocus />
+          <input id="input-get-token-username" type="text" class="form-control" placeholder="Enter your username" autofocus />
         </div>
         <div class="form-group">
-          <input id="input-login-password" type="password" class="form-control" placeholder="Enter your password" autofocus />
+          <input id="input-get-token-password" type="password" class="form-control" placeholder="Enter your password" autofocus />
         </div>
-        <button class="btn btn-primary" type="submit">Login</button>
+        <button class="btn btn-primary" type="submit">Get Auth Token!</button>
       </form>
+      <div class="container" id="auth_info" style="display: none">
+        <span>Your auth_token is</span>
+        <span id="spam-auth-token"></span>
+        <a id="link-random" class="btn" target="blank">Try javascript Random</a>
+        <a id="link-tournaments" class="btn" target="blank">Tournaments</a>
+      </div>      
       <form id="challenge-form" class="form-inline">
         <div class="form-group">
           <select id="input-challenge-username" class="form-control" autofocus />
@@ -37,45 +43,6 @@
           <input id="input-challenge-message" type="text" class="form-control" placeholder="Enter a message to your oponent" autofocus />
         </div>
         <button class="btn btn-primary" type="submit">Challenge</button>
-      </form>
-      <form id="move-form" class="form-inline">
-        <div class="form-group">
-          <input id="input-move-board-id" class="form-control" autofocus placeholder="board_id"/>
-        </div>
-        <div class="form-group">
-          <input id="input-move-turn-token" class="form-control" autofocus placeholder="turn_token"/>
-        </div>
-        <div class="form-group">
-          <input id="input-move-from-row" class="form-control" autofocus placeholder="from_row"/>
-        </div>
-        <div class="form-group">
-          <input id="input-move-from-col" class="form-control" autofocus placeholder="from_col"/>
-        </div>
-        <div class="form-group">
-          <input id="input-move-to-row" class="form-control" autofocus placeholder="to_row"/>
-        </div>
-        <div class="form-group">
-          <input id="input-move-to-col" class="form-control" autofocus placeholder="to_col"/>
-        </div>
-        <button class="btn btn-primary" type="submit">Move</button>
-      </form>
-      <form id="create-tournament-form" class="form-inline">
-        <button class="btn btn-primary" type="submit">Create Tournament</button>
-      </form>
-      <form id="add-user-tournament-form" class="form-inline">
-        <div class="form-group">
-          <input id="input-add-user-tournament-tournament-id" class="form-control" autofocus placeholder="tournament-id"/>
-        </div>
-        <div class="form-group">
-          <input id="input-user-add-tournament-username" class="form-control" autofocus placeholder="user-add-tournament"/>
-        </div>
-        <button class="btn btn-primary" type="submit">Add user to Tournament</button>
-      </form>
-      <form id="start-tournament-form" class="form-inline">
-        <div class="form-group">
-          <input id="input-start-tournament-tournament-id" class="form-control" autofocus placeholder="tournament-id"/>
-        </div>
-        <button class="btn btn-primary" type="submit">Start Tournament</button>
       </form>
     </div>
 

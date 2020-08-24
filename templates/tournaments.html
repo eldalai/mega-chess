@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Mega Chess</title>
+    <link href="static/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="static/css/application.css" rel="stylesheet" media="screen">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  </head>
+  <body>
+    <div class="container">
+      <div class="jumbotron">
+        <h1>Mega Chess</h1>
+      </div>
+      <form id="create-tournament-form" class="form-inline">
+        <button class="btn btn-primary" type="submit">Create Tournament</button>
+      </form>
+      <form id="add-user-tournament-form" class="form-inline">
+        <div class="form-group">
+          <input id="input-add-user-tournament-tournament-id" class="form-control" autofocus placeholder="tournament-id"/>
+        </div>
+        <div class="form-group">
+          <input id="input-user-add-tournament-username" class="form-control" autofocus placeholder="user-add-tournament"/>
+        </div>
+        <button class="btn btn-primary" type="submit">Add user to Tournament</button>
+      </form>
+      <form id="start-tournament-form" class="form-inline">
+        <div class="form-group">
+          <input id="input-start-tournament-tournament-id" class="form-control" autofocus placeholder="tournament-id"/>
+        </div>
+        <button class="btn btn-primary" type="submit">Start Tournament</button>
+      </form>
+    </div>
+
+
+    <script type="text/javascript" src="static/js/jquery-2.0.3.min.js"></script>
+    <script type="text/javascript" src="static/js/reconnecting-websocket.min.js"></script>
+    <script type="text/javascript" src="static/js/tournaments.js"></script>
+  </body>
+</html>

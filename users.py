@@ -1,5 +1,6 @@
 import bcrypt
 import ujson
+import uuid
 
 
 class UserException(Exception):
@@ -7,10 +8,15 @@ class UserException(Exception):
 
 
 class UserAlreadyExistsException(UserException):
-    pass
+    def __init__(self):
+        super().__init__('User already exists')
 
 
 class InvalidAuthLoginException(UserException):
+    pass
+
+
+class InvalidAuthTokenException(UserException):
     pass
 
 
@@ -25,24 +31,32 @@ class UserManager(object):
     def _user_id(self, username):
         return 'user:{}'.format(username)
 
+    def _token_id(self, auth_token):
+        return 'auth:{}'.format(auth_token)
+
     def _save_user(self, username, password):
         self.app.logger.info('_save_user username: {}'.format(username))
         try:
             hash_password = bcrypt.hashpw(
-                password.encode('utf-8'), bcrypt.gensalt())
+                password.encode('utf-8'), bcrypt.gensalt()
+            )
+            auth_token = str(uuid.uuid4())
             user = ujson.dumps({
                 'username': username,
                 'password': hash_password,
-                'clients': [],
+                'auth_token': auth_token,
             })
             self.redis_pool.set(self._user_id(username), user)
+            self.redis_pool.set(self._token_id(auth_token), username)
         except Exception as e:
             self.app.logger.info('_save_user username: {} Exception'.format(username))
             raise e
 
     def _is_password_valid(self, password, user):
-        return bcrypt.checkpw(password.encode('utf-8'),
-                              user['password'].encode('utf-8'))
+        return bcrypt.checkpw(
+            password.encode('utf-8'),
+            user['password'].encode('utf-8'),
+        )
 
     def register(self, username, password):
         self.app.logger.info('register username: {}'.format(username))
@@ -53,32 +67,17 @@ class UserManager(object):
         self._save_user(username, password)
         return True
 
-    def login(self, username, password, client):
+    def get_auth_token(self, username, password):
+        self.app.logger.info('get auth token username: {}'.format(username))
         user = self.get_user_by_username(username)
-        if self._is_password_valid(password, user) is False:
+        if not self._is_password_valid(password, user):
             raise InvalidAuthLoginException()
-        self.users[username] = user
-        self.users[username]['clients'].append(client)
-        return True
+        return user['auth_token']
 
-    @property
-    def active_user_list(self):
-        actives = []
-        for username, user in self.users.items():
-            for client in user['clients']:
-                if not client.closed:
-                    actives.append(username)
-                    break
-        return actives
-
-    @property
-    def active_clients(self):
-        actives = []
-        for user in self.users.values():
-            for client in user['clients']:
-                if not client.closed:
-                    actives.append(client)
-        return actives
+    async def get_username_by_auth_token(self, auth_token):
+        if not self.redis_pool.exists(self._token_id(auth_token)):
+            raise InvalidAuthTokenException()
+        return self.redis_pool.get(self._token_id(auth_token)).decode()
 
     def get_user_by_username(self, username):
         if not self.redis_pool.exists(self._user_id(username)):
@@ -88,17 +87,3 @@ class UserManager(object):
         if username not in user['username']:
             raise InvalidAuthLoginException()
         return user
-
-    def get_username_by_client(self, client):
-        for user in self.users.values():
-            for active_client in user['clients']:
-                if active_client == client:
-                    return user['username']
-
-    def get_clients_by_username(self, username):
-        if username in self.users:
-            clients = self.users[username]['clients']
-            self.app.logger.info('get_clients_by_username username {} {}'.format(username, clients))
-            return clients
-        else:
-            return []

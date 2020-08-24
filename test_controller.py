@@ -45,14 +45,14 @@ class TestActionsSwitcher(unittest.TestCase):
 
     def test_wrong_action(self):
         with self.assertRaises(InvalidActionFormatException):
-            self.controller.execute_message(
+            self.controller.parse_message(
                 client=self.mock_client,
                 message='Hola Mundo',
             )
 
     def test_no_action_provided(self):
         with self.assertRaises(InvalidNoActionException):
-            self.controller.execute_message(
+            self.controller.parse_message(
                 client=self.mock_client,
                 message='{"hola": "mundo"}',
             )

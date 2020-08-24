@@ -58,7 +58,12 @@ class TournamentManager():
         from itertools import combinations
         boards = []
         for user_white, user_black in combinations(users, 2):
+            total_moves = 50
             boards.append(
-                self.chess_manager.create_board(user_white, user_black),
+                self.chess_manager.create_board(
+                    user_white.decode(),
+                    user_black.decode(),
+                    total_moves,
+                ),
             )
         return boards

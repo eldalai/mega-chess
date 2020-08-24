@@ -20,6 +20,7 @@ class TestChessManager(unittest.TestCase):
         self.board_id = self.manager.create_board(
             white_username='white',
             black_username='black',
+            total_moves=10,
         )
 
     def test_get_invalid_board(self):
@@ -51,11 +52,11 @@ class TestChessManager(unittest.TestCase):
         self.assertEqual(board.white_score, 10)
 
     def test_start_game(self):
-        turn_token = self.manager.challenge('user1', 'user2')
+        turn_token = self.manager.challenge('user1', 'user2', 10)
         self.assertIsNotNone(turn_token)
 
     def test_move_with_turn_token(self):
-        board_id = self.manager.challenge('user1', 'user2')
+        board_id = self.manager.challenge('user1', 'user2', 10)
         first_turn_token, white_username, actual_turn_color, board = self.manager.challenge_accepted(board_id)
         # initial board turn should be WHITE
         self.assertEqual(actual_turn_color, WHITE)

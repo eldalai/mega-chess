@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 from pychess.chess import (
@@ -45,15 +46,20 @@ class InvalidTurnTokenException(ManagerException):
     pass
 
 
+class GameOverException(ManagerException):
+    pass
+
+
 class PlayingBoard(object):
 
-    def __init__(self, board, white_username, black_username ):
+    def __init__(self, board, white_username, black_username, total_moves):
         self.board = board
         self.white_username = white_username
         self.black_username = black_username
         self.turn_token = None
         self.white_score = 0
         self.black_score = 0
+        self.move_left = total_moves
 
     def _apply_score(self, color, score):
         if color == WHITE:
@@ -66,6 +72,9 @@ class PlayingBoard(object):
 
     def add_score(self, color, action, piece):
         self._apply_score(color, score_by_action[action] * score_by_piece[piece])
+
+    def move(self, from_row, from_col, to_row, to_col):
+        return self.board.move(from_row, from_col, to_row, to_col)
 
 
 class ChessManager(object):
@@ -83,8 +92,11 @@ class ChessManager(object):
     def _next_turn_token(self, board_id, previous_turn_token=None):
         if previous_turn_token and previous_turn_token in self.turns:
             del self.turns[previous_turn_token]
-        turn_token = str(uuid.uuid4())
         board = self.get_board_by_id(board_id)
+        board.move_left -= 1
+        if board.move_left <= 0:
+            raise GameOverException()
+        turn_token = str(uuid.uuid4())
         board.turn_token = turn_token
         self.turns[turn_token] = board_id
         return (
@@ -92,21 +104,23 @@ class ChessManager(object):
             board.white_username if board.board.actual_turn == WHITE else board.black_username,
             board.board.actual_turn,
             str(board.board),
+            board.move_left,
         )
 
-    def challenge(self, white_username, black_username):
-        board_id = self.create_board(white_username, black_username)
+    def challenge(self, white_username, black_username, total_moves):
+        board_id = self.create_board(white_username, black_username, total_moves)
         return board_id
 
     def challenge_accepted(self, board_id):
         return self._next_turn_token(board_id)
 
-    def create_board(self, white_username, black_username):
+    def create_board(self, white_username, black_username, total_moves):
         board_id = str(uuid.uuid4())
         self.boards[board_id] = PlayingBoard(
             board=BoardFactory.size_16(),
             white_username=white_username,
             black_username=black_username,
+            total_moves=total_moves,
         )
 
         return board_id
@@ -125,7 +139,7 @@ class ChessManager(object):
         board = self.get_board_by_id(board_id)
         color = board.board.actual_turn
         try:
-            action, piece = board.board.move(
+            action, piece = board.move(
                 from_row,
                 from_col,
                 to_row,
