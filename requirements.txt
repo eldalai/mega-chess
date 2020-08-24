@@ -7,7 +7,7 @@ cffi==1.14.1
 click==7.1.2
 decorator==4.4.2
 fakeredis==0.8.1
-Flask==0.10.1
+Flask==1.0
 Flask-DebugToolbar==0.10.0
 gunicorn==20.0.4
 h11==0.10.0
