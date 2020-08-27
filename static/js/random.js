@@ -230,6 +230,11 @@ function move() {
   }
 }
 
+$("#get-connected-users-button").click(function() {
+  event.preventDefault();
+    send('get_connected_users', {});
+
+});
 
 $("#challenge-form").on("submit", function(event) {
   event.preventDefault();

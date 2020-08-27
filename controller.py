@@ -124,6 +124,13 @@ class Controller:
             raise InvalidRegisterException()
         return self.user_manager.register(data['username'], data['password'])
 
+    async def action_get_connected_users(self, current_username, client, data):
+        self.app.logger.info('action_get_connected {} {}'.format(client, current_username))
+        data = {
+            'users_list': await self.get_active_users()
+        }
+        await self.send(client, 'update_user_list', data)
+
     async def action_login(self, current_username, client, data):
         self.app.logger.info('action_login {} {}'.format(client, current_username))
         client.username = current_username
