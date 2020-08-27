@@ -21,7 +21,7 @@ score_by_action = {
     RESULT_MOVE: 1,
     RESULT_EAT: 10,
     RESULT_PROMOTE: 50,
-    INVALID_MOVE: -1,
+    INVALID_MOVE: -20,
 }
 
 score_by_piece = {
