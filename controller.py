@@ -144,10 +144,10 @@ class Controller:
         return True
 
     async def get_active_users(self):
-        return (
+        return {
             queue.username for queue in self.connected_websockets
             if hasattr(queue, 'username')
-        )
+        }
 
     def get_username_by_client(self, client):
         for queue in self.connected_websockets:
