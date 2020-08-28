@@ -49,6 +49,13 @@ service.onmessage = function(message) {
       $("#input-user-add-tournament-username").append("<option value='" + data.data.users_list[user] + "'>" + data.data.users_list[user] + "</option>");
     }
   }
+  if(data.action == 'user_added_to_tournament') {
+    users_invited_to_tournament = ""
+    for( user in data.data ) {
+      users_invited_to_tournament += data.data[user] + " "
+    }
+    $("#spam-tournament-invited-users").html(users_invited_to_tournament)
+  }
 };
 
 $("#create-tournament-form").on("submit", function(event) {
