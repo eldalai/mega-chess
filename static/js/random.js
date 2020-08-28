@@ -60,7 +60,7 @@ service.onmessage = function(message) {
     )
   }
   if(data.action == 'update_user_list') {
-    $("#input-challenge-user").empty();
+    $("#input-challenge-username").empty();
     for( user in data.data.users_list ) {
       $("#input-challenge-username").append("<option value='" + data.data.users_list[user] + "'>" + data.data.users_list[user] + "</option>");
     }

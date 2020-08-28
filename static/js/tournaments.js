@@ -43,8 +43,14 @@ service.onmessage = function(message) {
     $('#input-add-user-tournament-tournament-id')[0].value = data.data.id;
     $('#input-start-tournament-tournament-id')[0].value = data.data.id;
   }
-
+  if(data.action == 'update_user_list') {
+    $("#input-user-add-tournament-username").empty();
+    for( user in data.data.users_list ) {
+      $("#input-user-add-tournament-username").append("<option value='" + data.data.users_list[user] + "'>" + data.data.users_list[user] + "</option>");
+    }
+  }
 };
+
 $("#create-tournament-form").on("submit", function(event) {
   event.preventDefault();
   send('create_tournament', {});
@@ -66,6 +72,12 @@ $("#start-tournament-form").on("submit", function(event) {
   send('start_tournament', {
     tournament_id: tournament_id
   });
+});
+
+$("#get-connected-users-button").click(function() {
+  event.preventDefault();
+    send('get_connected_users', {});
+
 });
 
 function send(action, data) {
