@@ -36,8 +36,11 @@
         <button class="btn btn-primary" type="submit">Start Tournament</button>
       </form>
     </div>
-
-
+    <ul>
+    {% for tournament in tournaments %}
+      <li>{{tournament.id}} Status: {{tournament.status}} Users: {{tournament.users}} Created: {{tournament.created}} <a href="tournament/{{tournament.id}}">details</a> </li>
+    {% endfor %}
+    </ul>
     <script type="text/javascript" src="static/js/jquery-2.0.3.min.js"></script>
     <script type="text/javascript" src="static/js/reconnecting-websocket.min.js"></script>
     <script type="text/javascript" src="static/js/tournaments.js"></script>

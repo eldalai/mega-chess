@@ -1,0 +1,7 @@
+ID: {{tournament.id}}
+Created: {{tournament.created}}
+Status: {{tournament.status}}
+Users: {{tournament.users}}
+{% for board in tournament.boards %}
+	board: {{board}}
+{% endfor %}

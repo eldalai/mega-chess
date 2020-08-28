@@ -114,8 +114,15 @@ class ChessManager(object):
     def challenge_accepted(self, board_id):
         return self._next_turn_token(board_id)
 
-    def create_board(self, white_username, black_username, total_moves):
-        board_id = str(uuid.uuid4())
+    def get_boards(self, prefix=''):
+        return (
+            board
+            for board_id, board in self.boards.items()
+            if board_id.startswith(prefix)
+        )
+
+    def create_board(self, white_username, black_username, total_moves, prefix=''):
+        board_id = prefix + '::' + str(uuid.uuid4())
         self.boards[board_id] = PlayingBoard(
             board=BoardFactory.size_16(),
             white_username=white_username,

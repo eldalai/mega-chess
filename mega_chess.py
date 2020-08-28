@@ -36,15 +36,6 @@ REDIS_URL = os.environ['REDIS_URL']
 
 app = Quart(__name__)
 
-# if 'DEBUG' in os.environ:
-#     app.debug = True
-#     from gevent import monkey
-#     monkey.patch_all(thread=False)
-
-# sockets = Sockets(app)
-redis_pool = redis.from_url(url=REDIS_URL, db=0)
-# controller = Controller(fakeredis.FakeStrictRedis(), app)
-
 
 @app.route('/')
 async def home():
@@ -58,7 +49,16 @@ async def view():
 
 @app.route('/tournaments')
 async def tournaments():
-    return await render_template('tournaments.html')
+    context = {}
+    context['tournaments'] = controller.tournament_manager.get_tournaments()
+    return await render_template('tournaments.html', **context)
+
+
+@app.route('/tournament/<tournament_id>')
+async def tournament(tournament_id):
+    context = {}
+    context['tournament'] = controller.tournament_manager.get_tournament(tournament_id, with_boards=True)
+    return await render_template('tournament.html', **context)
 
 
 @app.route('/random')
@@ -66,7 +66,10 @@ async def random():
     return await render_template('random.html')
 
 connected_websockets = set()
+redis_pool = redis.from_url(url=REDIS_URL, db=0)
 controller = Controller(redis_pool, app, connected_websockets)
+# offline...
+# controller = Controller(fakeredis.FakeStrictRedis(), app, connected_websockets)
 
 
 @app.route('/register', methods=["POST"])
