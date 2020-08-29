@@ -1,5 +1,5 @@
-import logging
 import uuid
+import ujson
 
 from pychess.chess import (
     Bishop,
@@ -52,14 +52,22 @@ class GameOverException(ManagerException):
 
 class PlayingBoard(object):
 
-    def __init__(self, board, white_username, black_username, total_moves):
+    def __init__(
+        self,
+        board,
+        white_username,
+        black_username,
+        move_left,
+        white_score=0,
+        black_score=0,
+    ):
         self.board = board
         self.white_username = white_username
         self.black_username = black_username
         self.turn_token = None
-        self.white_score = 0
-        self.black_score = 0
-        self.move_left = total_moves
+        self.white_score = white_score
+        self.black_score = black_score
+        self.move_left = move_left
 
     def _apply_score(self, color, score):
         if color == WHITE:
@@ -76,39 +84,52 @@ class PlayingBoard(object):
     def move(self, from_row, from_col, to_row, to_col):
         return self.board.move(from_row, from_col, to_row, to_col)
 
+    def serialize(self):
+        return {
+            'board': self.board.serialize(),
+            'white_username': self.white_username,
+            'black_username': self.black_username,
+            'turn_token': self.turn_token,
+            'white_score': self.white_score,
+            'black_score': self.black_score,
+            'move_left': self.move_left,
+        }
+
 
 class ChessManager(object):
     '''
     Responsable to turn_tokenmap board_id with board_id
-
-    TODO: Store/Retrieve boards from DB
     '''
 
-    def __init__(self):
-        super(ChessManager, self).__init__()
-        self.boards = {}
+    def __init__(self, redis_pool):
+        self.redis_pool = redis_pool
         self.turns = {}
 
     def _next_turn_token(self, board_id, previous_turn_token=None):
         if previous_turn_token and previous_turn_token in self.turns:
             del self.turns[previous_turn_token]
-        board = self.get_board_by_id(board_id)
-        board.move_left -= 1
-        if board.move_left <= 0:
+        playing_board = self.get_board_by_id(board_id)
+        playing_board.move_left -= 1
+        if playing_board.move_left <= 0:
             raise GameOverException()
         turn_token = str(uuid.uuid4())
-        board.turn_token = turn_token
+        playing_board.turn_token = turn_token
         self.turns[turn_token] = board_id
+        self._save_board(board_id, playing_board)
         return (
             turn_token,
-            board.white_username if board.board.actual_turn == WHITE else board.black_username,
-            board.board.actual_turn,
-            str(board.board),
-            board.move_left,
+            (
+                playing_board.white_username
+                if playing_board.board.actual_turn == WHITE
+                else playing_board.black_username
+            ),
+            playing_board.board.actual_turn,
+            str(playing_board.board),
+            playing_board.move_left,
         )
 
-    def challenge(self, white_username, black_username, total_moves):
-        board_id = self.create_board(white_username, black_username, total_moves)
+    def challenge(self, white_username, black_username, move_left):
+        board_id = self.create_board(white_username, black_username, move_left)
         return board_id
 
     def challenge_accepted(self, board_id):
@@ -121,21 +142,41 @@ class ChessManager(object):
             if board_id.startswith(prefix)
         )
 
-    def create_board(self, white_username, black_username, total_moves, prefix=''):
-        board_id = prefix + '::' + str(uuid.uuid4())
-        self.boards[board_id] = PlayingBoard(
+    def get_board_key(self, board_id):
+        return 'board:{}'.format(board_id)
+
+    def _save_board(self, board_id, board):
+        board_key = self.get_board_key(board_id)
+        self.redis_pool.set(board_key, ujson.dumps(board.serialize()))
+
+    def create_board(self, white_username, black_username, move_left, prefix=''):
+        board_id = str(uuid.uuid4())
+        if prefix:
+            board_id = prefix + '::' + board_id
+        playing_board = PlayingBoard(
             board=BoardFactory.size_16(),
             white_username=white_username,
             black_username=black_username,
-            total_moves=total_moves,
+            move_left=move_left,
         )
-
+        self._save_board(board_id, playing_board)
         return board_id
 
     def get_board_by_id(self, board_id):
-        if board_id not in self.boards:
+        board_key = self.get_board_key(board_id)
+        if not self.redis_pool.exists(board_key):
             raise InvalidBoardIdException()
-        return self.boards[board_id]
+        board_str = self.redis_pool.get(board_key)
+        board = ujson.loads(board_str)
+        playing_board = PlayingBoard(
+            BoardFactory.deserialize(board['board']),
+            board['white_username'],
+            board['black_username'],
+            board['move_left'],
+            board['white_score'],
+            board['black_score'],
+        )
+        return playing_board
 
     def get_board_id_by_turn_token(self, turn_token):
         if turn_token not in self.turns:
@@ -143,19 +184,21 @@ class ChessManager(object):
         return self.turns[turn_token]
 
     def move(self, board_id, from_row, from_col, to_row, to_col):
-        board = self.get_board_by_id(board_id)
-        color = board.board.actual_turn
+        playing_board = self.get_board_by_id(board_id)
+        color = playing_board.board.actual_turn
         try:
-            action, piece = board.move(
+            action, piece = playing_board.move(
                 from_row,
                 from_col,
                 to_row,
                 to_col,
             )
-            board.add_score(color, action, piece)
+            playing_board.add_score(color, action, piece)
         except Exception as e:
-            board.penalize_score(color)
+            playing_board.penalize_score(color)
             raise e
+        finally:
+            self._save_board(board_id, playing_board)
 
     def move_with_turn_token(self, turn_token, from_row, from_col, to_row, to_col):
         board_id = self.get_board_id_by_turn_token(turn_token)

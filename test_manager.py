@@ -1,4 +1,7 @@
 import unittest
+import ujson
+import fakeredis
+
 from pychess.chess import (
     BLACK,
     WHITE,
@@ -6,9 +9,11 @@ from pychess.chess import (
 )
 
 from manager import (
+    ChessManager,
+    BoardFactory,
     InvalidBoardIdException,
     InvalidTurnTokenException,
-    ChessManager,
+    PlayingBoard,
 )
 
 
@@ -16,16 +21,52 @@ class TestChessManager(unittest.TestCase):
 
     def setUp(self):
         super(TestChessManager, self).setUp()
-        self.manager = ChessManager()
+        self.fake_redis = fakeredis.FakeStrictRedis()
+        self.manager = ChessManager(self.fake_redis)
         self.board_id = self.manager.create_board(
             white_username='white',
             black_username='black',
-            total_moves=10,
+            move_left=10,
         )
 
     def test_get_invalid_board(self):
         with self.assertRaises(InvalidBoardIdException):
             self.manager.get_board_by_id('hola-mundo')
+
+    def test_save(self):
+        _board = BoardFactory.size_16()
+        board_id = '1234567890'
+        board = PlayingBoard(_board, 'white player', 'black player', 10)
+        self.manager._save_board(board_id, board)
+        self.assertTrue(self.fake_redis.exists('board:1234567890'))
+        saved_boar_str = self.fake_redis.get('board:1234567890')
+        restored_board = ujson.loads(saved_boar_str)
+        self.assertEqual(
+            restored_board,
+            {
+                'board': {
+                    'actual_turn': 'white',
+                    'size': 16,
+                    'board': (
+                        'rrhhbbqqkkbbhhrr' +
+                        'rrhhbbqqkkbbhhrr' +
+                        'pppppppppppppppp' +
+                        'pppppppppppppppp' +
+                        ('                ' * 8) +
+                        'PPPPPPPPPPPPPPPP' +
+                        'PPPPPPPPPPPPPPPP' +
+                        'RRHHBBQQKKBBHHRR' +
+                        'RRHHBBQQKKBBHHRR'
+                    )
+                },
+                'white_username': 'white player',
+                'black_username': 'black player',
+                'turn_token': None,
+                'white_score': 0,
+                'black_score': 0,
+                'move_left': 10,
+            }
+        )
 
     def test_create_board(self):
         board = self.manager.get_board_by_id(self.board_id)
@@ -33,6 +74,7 @@ class TestChessManager(unittest.TestCase):
         self.assertEqual(board.board.actual_turn, WHITE)
         self.assertEqual(board.white_score, 0)
         self.assertEqual(board.black_score, 0)
+        self.assertTrue(self.fake_redis.exists('board:{}'.format(self.board_id)))
 
     def test_invalid_move(self):
         with self.assertRaises(InvalidTurnException):
@@ -40,7 +82,7 @@ class TestChessManager(unittest.TestCase):
         board = self.manager.get_board_by_id(self.board_id)
         self.assertIsNotNone(board)
         self.assertEqual(board.board.actual_turn, WHITE)
-        self.assertEqual(board.white_score, -1)
+        self.assertEqual(board.white_score, -20)
         self.assertEqual(board.black_score, 0)
 
     def test_move(self):
@@ -57,20 +99,23 @@ class TestChessManager(unittest.TestCase):
 
     def test_move_with_turn_token(self):
         board_id = self.manager.challenge('user1', 'user2', 10)
-        first_turn_token, white_username, actual_turn_color, board = self.manager.challenge_accepted(board_id)
+        first_turn_token, white_username, actual_turn_color, board, move_left = self.manager.challenge_accepted(board_id)
         # initial board turn should be WHITE
         self.assertEqual(actual_turn_color, WHITE)
+        self.assertEqual(move_left, 9)
         # move WHITE with token
-        second_turn_token, black_username, actual_turn_color, board = self.manager.move_with_turn_token(first_turn_token, 12, 3, 11, 3)
+        second_turn_token, black_username, actual_turn_color, board, move_left = self.manager.move_with_turn_token(first_turn_token, 12, 3, 11, 3)
         # second board turn should be BLACK
         self.assertEqual(actual_turn_color, BLACK)
+        self.assertEqual(move_left, 8)
         # invalid turn token exception
         with self.assertRaises(InvalidTurnTokenException):
             self.manager.move_with_turn_token(first_turn_token, 12, 4, 11, 4)
         # move BLACK with token
-        third_turn_token, white_username, actual_turn_color, board = self.manager.move_with_turn_token(second_turn_token, 3, 3, 4, 3)
+        third_turn_token, white_username, actual_turn_color, board, move_left = self.manager.move_with_turn_token(second_turn_token, 3, 3, 4, 3)
         self.assertIsNotNone(third_turn_token)
         self.assertEqual(actual_turn_color, WHITE)
+        self.assertEqual(move_left, 7)
 
 if __name__ == '__main__':
     unittest.main()

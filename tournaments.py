@@ -82,14 +82,14 @@ class TournamentManager():
         users = tournament['users']
         from itertools import combinations
         boards = []
+        move_left = 50
         for user_white, user_black in combinations(users, 2):
-            total_moves = 50
             boards.append(
                 self.chess_manager.create_board(
                     user_white.decode(),
                     user_black.decode(),
-                    total_moves,
+                    move_left,
                     prefix=tournament_id,
                 ),
             )
-        return boards        
+        return boards

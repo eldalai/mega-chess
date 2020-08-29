@@ -58,7 +58,7 @@ class InvalidSaveTurnException(object):
 class Controller:
 
     def __init__(self, redis_pool, app, connected_websockets):
-        self.chess_manager = ChessManager()
+        self.chess_manager = ChessManager(redis_pool)
         self.user_manager = UserManager(redis_pool, app)
         self.tournament_manager = TournamentManager(redis_pool, self.chess_manager)
         self.board_subscribers = {}
@@ -168,11 +168,11 @@ class Controller:
         else:
             white_username = challenged_username
             black_username = challenger_username
-        total_moves = 20
+        move_left = 20
         board_id = self.chess_manager.challenge(
             white_username=white_username,
             black_username=black_username,
-            total_moves=total_moves,
+            move_left=move_left,
         )
         data = {
             'username': challenger_username,
