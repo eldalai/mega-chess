@@ -9,15 +9,15 @@ function getParameterByName(name, url) {
     return decodeURIComponent(results[2].replace(/\+/g, " "));
 }
 
-// Support TLS-specific URLs, when appropriate.
 if (window.location.protocol == "https:") {
   var ws_scheme = "wss://";
 } else {
   var ws_scheme = "ws://"
 };
 var auth_token = getParameterByName('auth_token');
+var username = getParameterByName('username');
+$('#current_username').html(username)
 
-// var login = new ReconnectingWebSocket(ws_scheme + location.host + "/login?authtoken=" + auth_token);
 var service = new ReconnectingWebSocket(ws_scheme + location.host + "/service?authtoken=" + auth_token);
 var boards = {};
 

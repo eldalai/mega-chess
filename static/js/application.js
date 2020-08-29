@@ -93,7 +93,7 @@ $("#get-token-form").on("submit", function(event) {
       auth_token = data.responseText;
       $('#spam-auth-token').html(auth_token);
       $('#auth_info').show();
-      $('#link-random')[0].href = "/random?auth_token=" + auth_token;
+      $('#link-random')[0].href = "/random?auth_token=" + auth_token + "&username=" + username;
       $('#link-tournaments')[0].href = "/tournaments?auth_token=" + auth_token;
     }
   });
