@@ -82,7 +82,7 @@ class TournamentManager():
         users = tournament['users']
         from itertools import combinations
         boards = []
-        move_left = 50
+        move_left = 100
         for user_white, user_black in combinations(users, 2):
             boards.append(
                 self.chess_manager.create_board(

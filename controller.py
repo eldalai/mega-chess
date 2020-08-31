@@ -168,7 +168,7 @@ class Controller:
         else:
             white_username = challenged_username
             black_username = challenger_username
-        move_left = 20
+        move_left = 100
         board_id = self.chess_manager.challenge(
             white_username=white_username,
             black_username=black_username,
