@@ -103,18 +103,22 @@ class ChessManager(object):
 
     def __init__(self, redis_pool):
         self.redis_pool = redis_pool
-        self.turns = {}
+
+    def get_turn_key(self, turn_token):
+        return 'turn_bord:{}'.format(turn_token)
 
     def _next_turn_token(self, board_id, previous_turn_token=None):
-        if previous_turn_token and previous_turn_token in self.turns:
-            del self.turns[previous_turn_token]
+        previous_turn_token_key = self.get_turn_key(previous_turn_token)
+        if previous_turn_token and self.redis_pool.exists(previous_turn_token_key):
+            self.redis_pool.delete(previous_turn_token_key)
         playing_board = self.get_board_by_id(board_id)
         playing_board.move_left -= 1
         if playing_board.move_left <= 0:
             raise GameOverException()
         turn_token = str(uuid.uuid4())
+        new_turn_token_key = self.get_turn_key(turn_token)
         playing_board.turn_token = turn_token
-        self.turns[turn_token] = board_id
+        self.redis_pool.set(new_turn_token_key, board_id)
         self._save_board(board_id, playing_board)
         return (
             turn_token,
@@ -179,9 +183,10 @@ class ChessManager(object):
         return playing_board
 
     def get_board_id_by_turn_token(self, turn_token):
-        if turn_token not in self.turns:
+        turn_token_key = self.get_turn_key(turn_token)
+        if not self.redis_pool.exists(turn_token_key):
             raise InvalidTurnTokenException()
-        return self.turns[turn_token]
+        return self.redis_pool.get(turn_token_key).decode('utf-8')
 
     def move(self, board_id, from_row, from_col, to_row, to_col):
         playing_board = self.get_board_by_id(board_id)
