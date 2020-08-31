@@ -24,16 +24,16 @@ var boards = {};
 var pieces_strategy = {
     'p': moveBlackPawn,
     'P': moveWhitePawn,
-    'r': moveRook,
-    'R': moveRook,
+    'r': null, //moveRook,
+    'R': null, //moveRook,
     'k': null,
     'K': null,
     'h': null,
     'H': null,
     'b': null,
     'B': null,
-    'q': moveQueen,
-    'Q': moveQueen
+    'q': null, //moveQueen,
+    'Q': null, //moveQueen
 };
 var processing = false;
 
@@ -83,28 +83,32 @@ service.onmessage = function(message) {
       console.log('parseBoard');
     parseBoard(data.data.board_id, data.data.board);
     //alert('it is your turn with ' + data.data.color);
+    console.log('selecting Piece!');
+    if(data.data.actual_turn === 'white') {
+      pieces = boards[data.data.board_id].white_pieces
+    } else {
+      pieces = boards[data.data.board_id].black_pieces
+    }
     selectedPiece = null;
     while(!selectedPiece) {
-      console.log('selecting Piece!');
-      if(data.data.actual_turn === 'white') {
-        pieces = boards[data.data.board_id].white_pieces
-      } else {
-        pieces = boards[data.data.board_id].black_pieces
-      }
       selectedPiece = pieces[random(pieces.length)];
       if(!selectedPiece.piece_strategy) {
         selectedPiece = null;
       }
-
     }
     $('#link-view-board')[0].href = "/view?board_id=" + data.data.board_id;
     $('#input-move-board-id')[0].value = data.data.board_id;
     $('#input-move-turn-token')[0].value = data.data.turn_token;
     $("#input-move-from-row")[0].value = selectedPiece.row;
     $("#input-move-from-col")[0].value = selectedPiece.col;
-      console.log('piece_strategy Piece');
     posible_move = selectedPiece.piece_strategy(data.data.actual_turn, selectedPiece.row, selectedPiece.col);
-      console.log('piece_strategy Piece done');
+    console.log(
+      'move Piece FROM' +
+      ' row: '+selectedPiece.row + 
+      ' col: '+selectedPiece.col +
+      ' TO row: '+posible_move.to_row +
+      ' col: ' + posible_move.to_col 
+      );
     $("#input-move-to-row")[0].value = posible_move.to_row;
     $("#input-move-to-col")[0].value = posible_move.to_col;
     move();
@@ -148,16 +152,16 @@ service.onmessage = function(message) {
 function parseBoard(board_id, board) {
   white_pieces = []
   black_pieces = []
-  for(i=1; i <= 16; i++){
-      for(j=1; j <= 16; j++){
-          row = (16 + 4) * i;
-          col = j + 1;
+  for(i=0; i < 16; i++){
+      for(j=0; j < 16; j++){
+          row = 16 * i;
+          col = j;
           cel = board.substr(row + col, 1);
           //console.log(cel);
           if( cel != ' '){
               piece = {
-                row: (i-1),
-                col: (j-1),
+                row: i,
+                col: j,
                 piece_strategy: pieces_strategy[cel],
               };
               if( cel === cel.toUpperCase() ) {
@@ -175,10 +179,10 @@ function parseBoard(board_id, board) {
 }
 
 function moveBlackPawn(color, from_row, from_col) {
-  return { to_row: from_row + 1, to_col: from_col + random(3) - 1 }
+  return { to_row: from_row + 1, to_col: from_col }
 }
 function moveWhitePawn(color, from_row, from_col) {
-  return { to_row: from_row - 1, to_col: from_col + random(3) - 1 }
+  return { to_row: from_row - 1, to_col: from_col }
 }
 
 function moveRook(color, from_row, from_col) {

@@ -290,7 +290,7 @@ class Controller:
     async def send_gameover(self, board_id):
         board = self.chess_manager.get_board_by_id(board_id)
         data = {
-            'board': str(board.board),
+            'board': board.board.get_simple(),
             'white_username': str(board.white_username),
             'black_username': str(board.black_username),
             'white_score': str(board.white_score),
@@ -347,7 +347,7 @@ class Controller:
 
     async def notify_board_update(self, board_subscriber_client, board):
         data = {
-            'board': str(board.board),
+            'board': board.board.get_simple(),
             'white_username': board.white_username,
             'black_username': board.black_username,
             'white_score': board.white_score,

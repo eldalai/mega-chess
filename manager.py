@@ -124,7 +124,7 @@ class ChessManager(object):
                 else playing_board.black_username
             ),
             playing_board.board.actual_turn,
-            str(playing_board.board),
+            playing_board.board.get_simple(),
             playing_board.move_left,
         )
 
