@@ -75,10 +75,10 @@ service.onmessage = function(message) {
 
   if(data.action == 'your_turn') {
     console.log('processing ' + data.data.turn_token);
-    processing = true;
     while(processing){
       console.log('processing');
     }
+    processing = true;
     //verifySubscribeBoard(data.data.board_id);
       console.log('parseBoard');
     parseBoard(data.data.board_id, data.data.board);
@@ -97,7 +97,7 @@ service.onmessage = function(message) {
       }
     }
     // $('#link-view-board')[0].href = "/view?board_id=" + data.data.board_id;
-    $('#link-view-board-log')[0].href = "/board-log" + data.data.board_id;
+    $('#link-view-board-log')[0].href = "/board-log/" + data.data.board_id;
     $('#input-move-board-id')[0].value = data.data.board_id;
     $('#input-move-turn-token')[0].value = data.data.turn_token;
     $("#input-move-from-row")[0].value = selectedPiece.row;
@@ -153,12 +153,13 @@ service.onmessage = function(message) {
 function parseBoard(board_id, board) {
   white_pieces = []
   black_pieces = []
+  console.log("B 0123456789012345")
   for(i=0; i < 16; i++){
+      row = 16 * i;
+      console.log((i % 10) + " " + board.substr(row, 16))
       for(j=0; j < 16; j++){
-          row = 16 * i;
           col = j;
           cel = board.substr(row + col, 1);
-          //console.log(cel);
           if( cel != ' '){
               piece = {
                 row: i,
@@ -173,6 +174,7 @@ function parseBoard(board_id, board) {
           }
       }
   }
+  console.log("W 0123456789012345")
   boards[board_id] = {
     white_pieces: white_pieces,
     black_pieces: black_pieces
