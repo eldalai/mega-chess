@@ -61,6 +61,13 @@ async def tournament(tournament_id):
     return await render_template('tournament.html', **context)
 
 
+@app.route('/board-log/<board_id>')
+async def board_log(board_id):
+    context = {}
+    context['board_log'] = controller.chess_manager.get_board_log(board_id)
+    return await render_template('board_log.html', **context)
+
+
 @app.route('/random')
 async def random():
     return await render_template('random.html')

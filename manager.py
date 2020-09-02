@@ -120,13 +120,24 @@ class ChessManager(object):
         playing_board.turn_token = turn_token
         self.redis_pool.set(new_turn_token_key, board_id)
         self._save_board(board_id, playing_board)
+        actual_username = (
+            playing_board.white_username
+            if playing_board.board.actual_turn == WHITE
+            else playing_board.black_username
+        )
+        self.log_board_data(
+            board_id,
+            'next_turn_token',
+            {
+                'turn_token': turn_token,
+                'actual_turn': playing_board.board.actual_turn,
+                'move_left': playing_board.move_left,
+                'actual_username': actual_username,
+            },
+        )
         return (
             turn_token,
-            (
-                playing_board.white_username
-                if playing_board.board.actual_turn == WHITE
-                else playing_board.black_username
-            ),
+            actual_username,
             playing_board.board.actual_turn,
             playing_board.board.get_simple(),
             playing_board.move_left,
@@ -146,6 +157,26 @@ class ChessManager(object):
             if board_id.startswith(prefix)
         )
 
+    def get_board_log_key(self, board_id):
+        return 'board-log:{}'.format(board_id)
+
+    def get_board_log(self, board_id):
+        board_log_key = self.get_board_log_key(board_id)
+        return (
+            ujson.loads(log)
+            for log in self.redis_pool.lrange(board_log_key, 0, -1)
+        )
+
+    def log_board_data(self, board_id, event, data):
+        board_log_key = self.get_board_log_key(board_id)
+        self.redis_pool.rpush(
+            board_log_key,
+            ujson.dumps({
+                'event': event,
+                'data': data,
+            }),
+        )
+
     def get_board_key(self, board_id):
         return 'board:{}'.format(board_id)
 
@@ -157,6 +188,15 @@ class ChessManager(object):
         board_id = str(uuid.uuid4())
         if prefix:
             board_id = prefix + '::' + board_id
+        self.log_board_data(
+            board_id,
+            'create_board',
+            {
+                'white_username': white_username,
+                'black_username': black_username,
+                'move_left': move_left,
+            },
+        )
         playing_board = PlayingBoard(
             board=BoardFactory.size_16(),
             white_username=white_username,
@@ -199,20 +239,67 @@ class ChessManager(object):
                 to_col,
             )
             playing_board.add_score(color, action, piece)
+            self.log_board_data(
+                board_id,
+                'add_score',
+                {
+                    'color': color,
+                    'action': action,
+                    'piece': piece,
+                },
+            )
         except Exception as e:
             playing_board.penalize_score(color)
+            import ipdb; ipdb.set_trace()
+            self.log_board_data(
+                board_id,
+                'penalize_score',
+                {
+                    'color': color,
+                    'exception': str(e),
+                },
+            )
             raise e
         finally:
+            self.log_board_data(
+                board_id,
+                'score',
+                {
+                    'white_username': playing_board.white_username,
+                    'black_username': playing_board.black_username,
+                    'white_score': playing_board.white_score,
+                    'black_score': playing_board.black_score,
+                },
+            )
             self._save_board(board_id, playing_board)
 
     def move_with_turn_token(self, turn_token, from_row, from_col, to_row, to_col):
         board_id = self.get_board_id_by_turn_token(turn_token)
+        self.log_board_data(
+            board_id,
+            'move_with_turn_token',
+            {
+                'turn_token': turn_token,
+                'from_row': from_row,
+                'from_col': from_col,
+                'to_row': to_row,
+                'to_col': to_col,
+            },
+        )
         self.move(board_id, from_row, from_col, to_row, to_col)
         return self._next_turn_token(board_id, turn_token)
 
     def force_change_turn(self, board_id, turn_token):
         board = self.get_board_by_id(board_id)
         board.penalize_score(board.board.actual_turn)
+        self.log_board_data(
+            board_id,
+            'force_change_turn',
+            {
+                'turn_token': turn_token,
+                'actual_turn': board.board.actual_turn,
+            },
+        )
         if board.board.actual_turn == WHITE:
             board.board.actual_turn = BLACK
         else:

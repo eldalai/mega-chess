@@ -54,7 +54,7 @@ service.onmessage = function(message) {
 
   if(data.action == 'gameover') {
     alert(
-      'Game is Over! \n' + 
+      'Game is Over! \n' +
       data.data.white_username + ": " + data.data.white_score + "\n" +
       data.data.black_username + ": " + data.data.black_score
     )
@@ -75,10 +75,10 @@ service.onmessage = function(message) {
 
   if(data.action == 'your_turn') {
     console.log('processing ' + data.data.turn_token);
+    processing = true;
     while(processing){
       console.log('processing');
     }
-    processing = true;
     //verifySubscribeBoard(data.data.board_id);
       console.log('parseBoard');
     parseBoard(data.data.board_id, data.data.board);
@@ -96,7 +96,8 @@ service.onmessage = function(message) {
         selectedPiece = null;
       }
     }
-    $('#link-view-board')[0].href = "/view?board_id=" + data.data.board_id;
+    // $('#link-view-board')[0].href = "/view?board_id=" + data.data.board_id;
+    $('#link-view-board-log')[0].href = "/board-log" + data.data.board_id;
     $('#input-move-board-id')[0].value = data.data.board_id;
     $('#input-move-turn-token')[0].value = data.data.turn_token;
     $("#input-move-from-row")[0].value = selectedPiece.row;
@@ -104,10 +105,10 @@ service.onmessage = function(message) {
     posible_move = selectedPiece.piece_strategy(data.data.actual_turn, selectedPiece.row, selectedPiece.col);
     console.log(
       'move Piece FROM' +
-      ' row: '+selectedPiece.row + 
+      ' row: '+selectedPiece.row +
       ' col: '+selectedPiece.col +
       ' TO row: '+posible_move.to_row +
-      ' col: ' + posible_move.to_col 
+      ' col: ' + posible_move.to_col
       );
     $("#input-move-to-row")[0].value = posible_move.to_row;
     $("#input-move-to-col")[0].value = posible_move.to_col;
