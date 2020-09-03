@@ -250,7 +250,6 @@ class ChessManager(object):
             )
         except Exception as e:
             playing_board.penalize_score(color)
-            import ipdb; ipdb.set_trace()
             self.log_board_data(
                 board_id,
                 'penalize_score',
@@ -259,6 +258,7 @@ class ChessManager(object):
                     'exception': str(e),
                 },
             )
+
             raise e
         finally:
             self.log_board_data(
@@ -290,18 +290,19 @@ class ChessManager(object):
         return self._next_turn_token(board_id, turn_token)
 
     def force_change_turn(self, board_id, turn_token):
-        board = self.get_board_by_id(board_id)
-        board.penalize_score(board.board.actual_turn)
+        playing_board = self.get_board_by_id(board_id)
+        playing_board.penalize_score(playing_board.board.actual_turn)
         self.log_board_data(
             board_id,
             'force_change_turn',
             {
                 'turn_token': turn_token,
-                'actual_turn': board.board.actual_turn,
+                'actual_turn': playing_board.board.actual_turn,
             },
         )
-        if board.board.actual_turn == WHITE:
-            board.board.actual_turn = BLACK
+        if playing_board.board.actual_turn == WHITE:
+            playing_board.board.actual_turn = BLACK
         else:
-            board.board.actual_turn = WHITE
+            playing_board.board.actual_turn = WHITE
+        self._save_board(board_id, playing_board)
         return self._next_turn_token(board_id, turn_token)
