@@ -300,6 +300,16 @@ class ChessManager(object):
                 'actual_turn': playing_board.board.actual_turn,
             },
         )
+        self.log_board_data(
+            board_id,
+            'score',
+            {
+                'white_username': playing_board.white_username,
+                'black_username': playing_board.black_username,
+                'white_score': playing_board.white_score,
+                'black_score': playing_board.black_score,
+            },
+        )
         if playing_board.board.actual_turn == WHITE:
             playing_board.board.actual_turn = BLACK
         else:
