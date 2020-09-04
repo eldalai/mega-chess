@@ -1,4 +1,5 @@
 from datetime import datetime
+from collections import defaultdict
 import ujson
 import uuid
 
@@ -25,7 +26,25 @@ class TournamentManager():
         tournament = self.get_tournament_by_key(tournament_key)
         tournament['users'] = self.get_users(tournament_id)
         if with_boards:
-            tournament['boards'] = self.chess_manager.get_boards(prefix=tournament_key)
+            tournament['boards'] = []
+        scores = defaultdict(int)
+        boards = self.chess_manager.get_boards(prefix=tournament_key)
+        for board in boards:
+            if with_boards:
+                tournament['boards'].append(board)
+            if board.white_score > board.black_score:
+                scores[board.white_username] += 3
+            elif board.white_score < board.black_score:
+                scores[board.black_username] += 3
+        if scores:
+            max_score = max((value for value in scores.values()))
+            winners = [
+                username for username, score in scores.items() if score == max_score
+            ]
+        else:
+            winners = []
+        tournament['winners'] = winners
+        tournament['scores'] = scores
         return tournament
 
     def get_tournament_by_key(self, tournament_key):
@@ -98,5 +117,7 @@ class TournamentManager():
     def board_finish(self, board_id):
         # board_id ~ board:[tournament:<tournament_id>]::<board_id>
         # playing_board = self.chess_manager.get_board_by_id(board_id)
-        tournament_id = board_id.split(':')[2]
-        self.chess_manager.get_boards(tournament_id)
+        tournament_key = board_id.split(':')[2]
+        boards = self.chess_manager.get_boards(prefix=tournament_key)
+        # for board in boards:
+

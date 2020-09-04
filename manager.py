@@ -63,6 +63,7 @@ class PlayingBoard(object):
         move_left,
         white_score=0,
         black_score=0,
+        board_id=None,
     ):
         self.board = board
         self.white_username = white_username
@@ -71,6 +72,7 @@ class PlayingBoard(object):
         self.white_score = white_score
         self.black_score = black_score
         self.move_left = move_left
+        self.board_id = board_id
 
     def _apply_score(self, color, score):
         if color == WHITE:
@@ -100,6 +102,7 @@ class PlayingBoard(object):
             'white_score': self.white_score,
             'black_score': self.black_score,
             'move_left': self.move_left,
+            'board_id': self.board_id,
         }
 
 
@@ -209,6 +212,7 @@ class ChessManager(object):
             white_username=white_username,
             black_username=black_username,
             move_left=move_left,
+            board_id=board_id,
         )
         self._save_board(board_id, playing_board)
         return board_id
@@ -222,6 +226,9 @@ class ChessManager(object):
     def get_board_by_key(self, board_key):
         board_str = self.redis_pool.get(board_key)
         board = ujson.loads(board_str)
+        if type(board_key) == bytes:
+            board_key = board_key.decode('utf-8')
+        board_id = board_key.split('board:')[1] if board_key else None
         playing_board = PlayingBoard(
             BoardFactory.deserialize(board['board']),
             board['white_username'],
@@ -229,6 +236,7 @@ class ChessManager(object):
             board['move_left'],
             board['white_score'],
             board['black_score'],
+            board_id=board_id,
         )
         return playing_board
 
