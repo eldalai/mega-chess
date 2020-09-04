@@ -25,7 +25,7 @@ class TournamentManager():
         tournament = self.get_tournament_by_key(tournament_key)
         tournament['users'] = self.get_users(tournament_id)
         if with_boards:
-            tournament['boards'] = self.chess_manager.get_boards(prefix=tournament_id)
+            tournament['boards'] = self.chess_manager.get_boards(prefix=tournament_key)
         return tournament
 
     def get_tournament_by_key(self, tournament_key):
@@ -82,14 +82,21 @@ class TournamentManager():
         users = tournament['users']
         from itertools import combinations
         boards = []
-        move_left = 100
+        move_left = 200
+        tournament_key = self.get_tournament_key(tournament_id)
         for user_white, user_black in combinations(users, 2):
             boards.append(
                 self.chess_manager.create_board(
                     user_white.decode(),
                     user_black.decode(),
                     move_left,
-                    prefix=tournament_id,
+                    prefix=tournament_key,
                 ),
             )
         return boards
+
+    def board_finish(self, board_id):
+        # board_id ~ board:[tournament:<tournament_id>]::<board_id>
+        # playing_board = self.chess_manager.get_board_by_id(board_id)
+        tournament_id = board_id.split(':')[2]
+        self.chess_manager.get_boards(tournament_id)

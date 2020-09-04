@@ -33,6 +33,9 @@ score_by_piece = {
     King.PIECE_LETTER: 100,
 }
 
+ACTIVE = 'ACTIVE'
+FINISH = 'FINISH'
+
 
 class ManagerException(Exception):
     pass
@@ -83,6 +86,10 @@ class PlayingBoard(object):
 
     def move(self, from_row, from_col, to_row, to_col):
         return self.board.move(from_row, from_col, to_row, to_col)
+
+    @property
+    def status(self):
+        return ACTIVE if self.move_left > 0 else FINISH
 
     def serialize(self):
         return {
@@ -151,10 +158,10 @@ class ChessManager(object):
         return self._next_turn_token(board_id)
 
     def get_boards(self, prefix=''):
+        board_keys = self.redis_pool.keys(self.get_board_key(prefix + '*'))
         return (
-            board
-            for board_id, board in self.boards.items()
-            if board_id.startswith(prefix)
+            self.get_board_by_key(board_key)
+            for board_key in board_keys
         )
 
     def get_board_log_key(self, board_id):
@@ -210,6 +217,9 @@ class ChessManager(object):
         board_key = self.get_board_key(board_id)
         if not self.redis_pool.exists(board_key):
             raise InvalidBoardIdException()
+        return self.get_board_by_key(board_key)
+
+    def get_board_by_key(self, board_key):
         board_str = self.redis_pool.get(board_key)
         board = ujson.loads(board_str)
         playing_board = PlayingBoard(

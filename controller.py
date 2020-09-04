@@ -152,10 +152,10 @@ class Controller:
     def get_username_by_client(self, client):
         for queue in self.connected_websockets:
             if(
-                hasattr(queue, 'webservice') and 
+                hasattr(queue, 'webservice') and
                 queue.webservice == client and
                 hasattr(queue, 'username')
-            ): 
+            ):
                 return queue.username
 
     async def action_challenge(self, current_username, client, data):
@@ -184,12 +184,12 @@ class Controller:
     async def broadcast(self, action, data, username=None):
         for queue in self.connected_websockets:
             if(
-                not username or 
-                ( 
-                    hasattr(queue, 'username') and 
+                not username or
+                (
+                    hasattr(queue, 'username') and
                     username == queue.username
                 )
-            ): 
+            ):
                 message = {
                     'action': action,
                     'data': data,
@@ -245,7 +245,7 @@ class Controller:
                 self.app.logger.error('action_move {} exception  {} {}'.format(board_id, e, tb))
                 await self.force_change_turn(data['board_id'], data['turn_token'])
                 return
-                # turn_token, username, actual_turn, board, move_left = self.chess_manager._next_turn_token(board_id)                
+                # turn_token, username, actual_turn, board, move_left = self.chess_manager._next_turn_token(board_id)
             except GameOverException:
                 await self.send_gameover(board_id)
                 return
@@ -289,6 +289,8 @@ class Controller:
 
     async def send_gameover(self, board_id):
         board = self.chess_manager.get_board_by_id(board_id)
+        if self.tournament_manager.get_tournament_key('') in board_id:
+            self.tournament_manager.board_finish(board_id)
         data = {
             'board': board.board.get_simple(),
             'white_username': str(board.white_username),
