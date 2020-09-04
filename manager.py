@@ -268,10 +268,9 @@ class ChessManager(object):
                 },
             )
         except Exception as e:
-            playing_board.penalize_score(color)
             self.log_board_data(
                 board_id,
-                'penalize_score',
+                'wrong_move',
                 {
                     'color': color,
                     'exception': str(e),
