@@ -124,6 +124,7 @@ class ChessManager(object):
         playing_board = self.get_board_by_id(board_id)
         playing_board.move_left -= 1
         if playing_board.move_left <= 0:
+            self._save_board(board_id, playing_board)
             raise GameOverException()
         turn_token = str(uuid.uuid4())
         new_turn_token_key = self.get_turn_key(turn_token)
