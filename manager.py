@@ -17,6 +17,8 @@ from pychess.chess import (
 )
 
 INVALID_MOVE = 'invalid_move'
+FORCE_GAMEOVER_LIMIT = 25
+
 score_by_action = {
     RESULT_MOVE: 1,
     RESULT_EAT: 10,
@@ -123,7 +125,11 @@ class ChessManager(object):
             self.redis_pool.delete(previous_turn_token_key)
         playing_board = self.get_board_by_id(board_id)
         playing_board.move_left -= 1
-        if playing_board.move_left <= 0:
+        if(
+            playing_board.move_left <= 0 or
+            playing_board.white_score < INVALID_MOVE * FORCE_GAMEOVER_LIMIT or
+            playing_board.black_score < INVALID_MOVE * FORCE_GAMEOVER_LIMIT
+        ):
             self._save_board(board_id, playing_board)
             raise GameOverException()
         turn_token = str(uuid.uuid4())
