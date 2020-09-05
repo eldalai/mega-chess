@@ -44,10 +44,10 @@ async def start(auth_token):
                         {
                             'board_id': data['data']['board_id'],
                             'turn_token': data['data']['turn_token'],
-                            'from_row': randint(0, 16),
-                            'from_col': randint(0, 16),
-                            'to_row': randint(0, 16),
-                            'to_col': randint(0, 16),
+                            'from_row': randint(0, 15),
+                            'from_col': randint(0, 15),
+                            'to_row': randint(0, 15),
+                            'to_col': randint(0, 15),
                         },
                     )
 
