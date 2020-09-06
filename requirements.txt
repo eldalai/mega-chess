@@ -28,7 +28,6 @@ prompt-toolkit==3.0.5
 ptyprocess==0.6.0
 pycparser==2.20
 Pygments==2.6.1
-Python-Chess==0.7.0
 Quart==0.13.0
 redis==2.10.5
 six==1.15.0

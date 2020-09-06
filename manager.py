@@ -93,7 +93,13 @@ class PlayingBoard(object):
 
     @property
     def status(self):
-        return ACTIVE if self.move_left > 0 else FINISH
+        return (
+            ACTIVE
+            if self.move_left > 0 and
+            self.white_score > score_by_action[INVALID_MOVE] * FORCE_GAMEOVER_LIMIT and
+            self.black_score > score_by_action[INVALID_MOVE] * FORCE_GAMEOVER_LIMIT
+            else FINISH
+        )
 
     def serialize(self):
         return {
@@ -125,11 +131,7 @@ class ChessManager(object):
             self.redis_pool.delete(previous_turn_token_key)
         playing_board = self.get_board_by_id(board_id)
         playing_board.move_left -= 1
-        if(
-            playing_board.move_left <= 0 or
-            playing_board.white_score < INVALID_MOVE * FORCE_GAMEOVER_LIMIT or
-            playing_board.black_score < INVALID_MOVE * FORCE_GAMEOVER_LIMIT
-        ):
+        if playing_board.status == FINISH:
             self._save_board(board_id, playing_board)
             raise GameOverException()
         turn_token = str(uuid.uuid4())
