@@ -42,4 +42,4 @@ Werkzeug==1.0.1
 wsproto==0.15.0
 zope.event==4.4
 zope.interface==5.1.0
-git+git://github.com/eldalai/pychess@master#egg=pychess
+git+git://github.com/eldalai/pychess@0.8.0#egg=pychess
