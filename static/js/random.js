@@ -97,7 +97,7 @@ service.onmessage = function(message) {
     }
     processing = true;
     //verifySubscribeBoard(data.data.board_id);
-    parseBoard(data.data.board_id, data.data.board);
+    parseBoard(data.data);
     //alert('it is your turn with ' + data.data.color);
     console.log('selecting Piece!');
     if(data.data.actual_turn === 'white') {
@@ -166,13 +166,19 @@ service.onmessage = function(message) {
 
 };
 
-function verifyBoard(board_id) {
+function verifyBoard(data) {
   boards = $("#boards");
-  board_div_id = "board_" + board_id;
+  board_div_id = "board_" + data.board_id;
   if ( $( "#" + board_div_id ).length ) {
     return;
   }
-  board_container_div = $("<div><span>board id: " + board_id + "</span></div>").appendTo(boards);
+  board_container_div = $(
+    "<div>" +
+    "<p>board id: " + data.board_id + "</p>" +
+    "<p>actual turn: " + data.actual_turn + "</p>" +
+    "<p>moves left: " + data.move_left + "</p>" +
+    "</div>"
+  ).appendTo(boards);
   board_div = $("<div class=\"board\" id=\"" + board_div_id + "\"></div>").appendTo(board_container_div);
   for(row=0; row < 16; row++) {
     row_div = $("<div class=\"row\"></div>").appendTo(board_div);
@@ -198,10 +204,20 @@ function verifyBoard(board_id) {
 
 }
 
-function parseBoard(board_id, board) {
+parseBoard({
+  'actual_turn': 'white',
+  "username": "gabriel1",
+  "move_left": 151,
+  'board_id': "78e3a67e-98a2-4c72-b8cc-774f7bcd181b",
+  'board': "rrhhbbqqkkbbhhrrrrhhbbqqkkbbhhrrpppppppppppppppppppppppp ppppppp                                                                Q  Q                                           q                                                                                "
+});
+
+function parseBoard(data) {
+  board_id = data.board_id;
+  board = data.board;
   white_pieces = [];
   black_pieces = [];
-  verifyBoard(board_id);
+  verifyBoard(data);
   console.log("B 0123456789012345");
   board_div_id = "#board_" + board_id;
   for(i=0; i < 16; i++){
