@@ -35,6 +35,23 @@ var pieces_strategy = {
     'q': null, //moveQueen,
     'Q': null, //moveQueen
 };
+
+var pretty_pieces = {
+    'p': '♟',
+    'P': '♙',
+    'r': '♜',
+    'R': '♖',
+    'k': '♚',
+    'K': '♔',
+    'h': '♞',
+    'H': '♘',
+    'b': '♝',
+    'B': '♗',
+    'q': '♛',
+    'Q': '♕',
+    ' ': ' '
+}
+
 var processing = false;
 
 service.onopen = function() {
@@ -80,7 +97,6 @@ service.onmessage = function(message) {
     }
     processing = true;
     //verifySubscribeBoard(data.data.board_id);
-      console.log('parseBoard');
     parseBoard(data.data.board_id, data.data.board);
     //alert('it is your turn with ' + data.data.color);
     console.log('selecting Piece!');
@@ -150,16 +166,52 @@ service.onmessage = function(message) {
 
 };
 
+function verifyBoard(board_id) {
+  boards = $("#boards");
+  board_div_id = "board_" + board_id;
+  if ( $( "#" + board_div_id ).length ) {
+    return;
+  }
+  board_container_div = $("<div><span>board id: " + board_id + "</span></div>").appendTo(boards);
+  board_div = $("<div class=\"board\" id=\"" + board_div_id + "\"></div>").appendTo(board_container_div);
+  for(row=0; row < 16; row++) {
+    row_div = $("<div class=\"row\"></div>").appendTo(board_div);
+    if(row % 2 == 0) {
+      white_cel = true;
+    } else {
+      white_cel = false;
+    }
+    for(col=0; col < 16; col++) {
+      if(white_cel) {
+        cell_class = "white_place";
+        white_cel = false;
+      } else {
+        cell_class = "black_place";
+        white_cel = true;
+      }
+      cel_div = $("<div class=\"" + cell_class + "\"></div>").appendTo(row_div);
+      cel_id = board_div_id + "_" + row + "_" + col;
+      cel = $("<span id=\"" + cel_id + "\" >?</span>").appendTo(cel_div);
+
+    }
+  }
+
+}
+
 function parseBoard(board_id, board) {
-  white_pieces = []
-  black_pieces = []
-  console.log("B 0123456789012345")
+  white_pieces = [];
+  black_pieces = [];
+  verifyBoard(board_id);
+  console.log("B 0123456789012345");
+  board_div_id = "#board_" + board_id;
   for(i=0; i < 16; i++){
       row = 16 * i;
       console.log((i % 10) + " " + board.substr(row, 16))
       for(j=0; j < 16; j++){
           col = j;
           cel = board.substr(row + col, 1);
+          cel_id = board_div_id + "_" + i + "_" + j;
+          $(cel_id).html(pretty_pieces[cel]);
           if( cel != ' '){
               piece = {
                 row: i,

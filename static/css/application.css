@@ -2,3 +2,24 @@
   overflow: auto;
   height: 500px;
 }
+
+div.row {
+    display: table-row;
+    height: 40px;
+}
+div.white_place {
+    display: table-cell;
+    width: 40px;
+    text-align: center;
+}
+div.black_place {
+    background-color: rgba(200, 200, 200);
+    display: table-cell;
+    width: 40px;
+    text-align: center;
+}
+div.board {
+    display: table;
+    border-style: solid;
+    font-size:30px;
+}
