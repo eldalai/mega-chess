@@ -204,13 +204,13 @@ function verifyBoard(data) {
 
 }
 
-parseBoard({
-  'actual_turn': 'white',
-  "username": "gabriel1",
-  "move_left": 151,
-  'board_id': "78e3a67e-98a2-4c72-b8cc-774f7bcd181b",
-  'board': "rrhhbbqqkkbbhhrrrrhhbbqqkkbbhhrrpppppppppppppppppppppppp ppppppp                                                                Q  Q                                           q                                                                                "
-});
+// parseBoard({
+//   'actual_turn': 'white',
+//   "username": "gabriel1",
+//   "move_left": 151,
+//   'board_id': "78e3a67e-98a2-4c72-b8cc-774f7bcd181b",
+//   'board': "rrhhbbqqkkbbhhrrrrhhbbqqkkbbhhrrpppppppppppppppppppppppp ppppppp                                                                Q  Q                                           q                                                                                "
+// });
 
 function parseBoard(data) {
   board_id = data.board_id;
