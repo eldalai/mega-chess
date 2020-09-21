@@ -7,21 +7,6 @@ if (window.location.protocol == "https:") {
 
 var service = new ReconnectingWebSocket(ws_scheme + location.host + "/service");
 
-// service.onopen = function() {
-//   console.log('service open');
-//   var username   = $("#input-login-username")[0].value;
-//   var password   = $("#input-login-password")[0].value;
-//   if(username && password) {
-//     service.send(JSON.stringify({
-//       action: 'login',
-//       data: {
-//         username: username,
-//         password: password
-//       }
-//     }));
-//   }
-// };
-
 service.onclose = function(){
     console.log('service closed');
     this.service = new WebSocket(service.url);
@@ -31,13 +16,13 @@ service.onclose = function(){
 service.onmessage = function(message) {
   console.log(message.data)
   var data = JSON.parse(message.data);
-  if(data.action == 'update_user_list') {
+  if(data.event == 'update_user_list') {
     $("#input-challenge-user").empty();
     for( user in data.data.users_list ) {
       $("#input-challenge-username").append("<option value='" + data.data.users_list[user] + "'>" + data.data.users_list[user] + "</option>");
     }
   }
-  if(data.action == 'ask_challenge') {
+  if(data.event == 'ask_challenge') {
     if( confirm(data.data.username + ' challenge you to play, do you want to play with him?') ) {
       send('accept_challenge', { board_id: data.data.board_id });
     }
@@ -66,7 +51,7 @@ $("#register-form").on("submit", function(event) {
   };
   $.ajax({
     type: "POST",
-    url: "register", 
+    url: "register",
     data: JSON.stringify(data),
     contentType: "application/json",
     complete: function(data) {
@@ -85,7 +70,7 @@ $("#get-token-form").on("submit", function(event) {
   };
   $.ajax({
     type: "POST",
-    url: "token", 
+    url: "token",
     data: JSON.stringify(data),
     contentType: "application/json",
     complete: function(data) {

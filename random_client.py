@@ -31,11 +31,11 @@ async def play(websocket):
             response = await websocket.recv()
             print(f"< {response}")
             data = json.loads(response)
-            if data['action'] == 'update_user_list':
+            if data['event'] == 'update_user_list':
                 pass
-            if data['action'] == 'gameover':
+            if data['event'] == 'gameover':
                 pass
-            if data['action'] == 'ask_challenge':
+            if data['event'] == 'ask_challenge':
                 await send(
                     websocket,
                     'accept_challenge',
@@ -43,7 +43,7 @@ async def play(websocket):
                         'board_id': data['data']['board_id'],
                     },
                 )
-            if data['action'] == 'your_turn':
+            if data['event'] == 'your_turn':
                 await send(
                     websocket,
                     'move',

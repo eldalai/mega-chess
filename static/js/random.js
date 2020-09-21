@@ -69,28 +69,28 @@ service.onmessage = function(message) {
   console.log(message.data)
   var data = JSON.parse(message.data);
 
-  if(data.action == 'gameover') {
+  if(data.event == 'gameover') {
     alert(
       'Game is Over! \n' +
       data.data.white_username + ": " + data.data.white_score + "\n" +
       data.data.black_username + ": " + data.data.black_score
     )
   }
-  if(data.action == 'update_user_list') {
+  if(data.event == 'update_user_list') {
     $("#input-challenge-username").empty();
     for( user in data.data.users_list ) {
       $("#input-challenge-username").append("<option value='" + data.data.users_list[user] + "'>" + data.data.users_list[user] + "</option>");
     }
   }
 
-  if(data.action == 'ask_challenge') {
+  if(data.event == 'ask_challenge') {
     if( confirm(data.data.username + ' challenge you to play, do you want to play with him?') ) {
       //verifySubscribeBoard(data.data.board_id);
       send('accept_challenge', { board_id: data.data.board_id });
     }
   }
 
-  if(data.action == 'your_turn') {
+  if(data.event == 'your_turn') {
     console.log('processing ' + data.data.turn_token);
     while(processing){
       console.log('processing');
@@ -132,7 +132,7 @@ service.onmessage = function(message) {
     processing = false;
   }
 
-  if(data.action == 'update_board') {
+  if(data.event == 'update_board') {
     board = data.data.board;
     board_id = data.data.board_id;
     //console.log(board);

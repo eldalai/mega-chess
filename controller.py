@@ -181,7 +181,7 @@ class Controller:
         await self.broadcast('ask_challenge', data, challenged_username)
         return True
 
-    async def broadcast(self, action, data, username=None):
+    async def broadcast(self, event, data, username=None):
         for queue in self.connected_websockets:
             if(
                 not username or
@@ -191,7 +191,7 @@ class Controller:
                 )
             ):
                 message = {
-                    'action': action,
+                    'event': event,
                     'data': data,
                 }
                 await queue.put(ujson.dumps(message))
@@ -367,15 +367,15 @@ class Controller:
         self.notify_board_update(client, board)
         return True
 
-    async def send(self, client, action, data):
+    async def send(self, client, event, data):
         """
         Send given data to the registered client.
         Automatically discards invalid connections.
         """
         try:
-            self.app.logger.info(u'send to client: {}, action: {}, data: {}'.format(client, action, data))
+            self.app.logger.info(u'send to client: {}, event: {}, data: {}'.format(client, event, data))
             message = {
-                'action': action,
+                'event': event,
                 'data': data,
             }
             # print 'sent to {0}: {1}'.format(client, message)

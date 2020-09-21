@@ -38,18 +38,18 @@ service.onclose = function(){
 service.onmessage = function(message) {
   console.log(message.data)
   var data = JSON.parse(message.data);
-  if(data.action == 'tournament_created') {
-    alert('tournament created ' + data.data.id);    
+  if(data.event == 'tournament_created') {
+    alert('tournament created ' + data.data.id);
     $('#input-add-user-tournament-tournament-id')[0].value = data.data.id;
     $('#input-start-tournament-tournament-id')[0].value = data.data.id;
   }
-  if(data.action == 'update_user_list') {
+  if(data.event == 'update_user_list') {
     $("#input-user-add-tournament-username").empty();
     for( user in data.data.users_list ) {
       $("#input-user-add-tournament-username").append("<option value='" + data.data.users_list[user] + "'>" + data.data.users_list[user] + "</option>");
     }
   }
-  if(data.action == 'user_added_to_tournament') {
+  if(data.event == 'user_added_to_tournament') {
     users_invited_to_tournament = ""
     for( user in data.data ) {
       users_invited_to_tournament += data.data[user] + " "
