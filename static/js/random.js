@@ -176,7 +176,7 @@ function verifyBoard(data) {
     "<div>" +
     "<p>board id: " + data.board_id + "</p>" +
     "<p>actual turn: " + data.actual_turn + "</p>" +
-    "<p>moves left: " + data.move_left + "</p>" +
+    "<p>moves left: <span id=move_left_" + data.board_id + " \> </p>" +
     "</div>"
   ).appendTo(boards);
   board_div = $("<div class=\"board\" id=\"" + board_div_id + "\"></div>").appendTo(board_container_div);
@@ -219,6 +219,7 @@ function parseBoard(data) {
   black_pieces = [];
   verifyBoard(data);
   console.log("B 0123456789012345");
+  $("#move_left_" + board_id).html(data.move_left)
   board_div_id = "#board_" + board_id;
   for(i=0; i < 16; i++){
       row = 16 * i;
