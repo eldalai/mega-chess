@@ -113,7 +113,6 @@ service.onmessage = function(message) {
       }
     }
     // $('#link-view-board')[0].href = "/view?board_id=" + data.data.board_id;
-    $('#link-view-board-log')[0].href = "/board-log/" + data.data.board_id;
     $('#input-move-board-id')[0].value = data.data.board_id;
     $('#input-move-turn-token')[0].value = data.data.turn_token;
     $("#input-move-from-row")[0].value = selectedPiece.row;
@@ -174,7 +173,8 @@ function verifyBoard(data) {
   }
   board_container_div = $(
     "<div>" +
-    "<p>board id: " + data.board_id + "</p>" +
+    "<p>board id: " + data.board_id +
+    "<a href=\"/board-log/" + data.board_id + "\" class=\"btn\" target=\"blank\">View Board Log</a></p>" +
     "<p>actual turn: " + data.actual_turn + "</p>" +
     "<p>moves left: <span id=move_left_" + data.board_id + " \> </p>" +
     "</div>"
