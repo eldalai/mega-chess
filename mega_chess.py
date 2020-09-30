@@ -84,10 +84,20 @@ async def register():
     registration = await request.get_json()
     print(registration)
     try:
-        result = controller.user_manager.register(**registration)
+        controller.user_manager.register(**registration)
         return 'Register Ok!', 200
     except Exception as e:
         return 'Register ERROR! {}'.format(str(e)), 200
+
+
+@app.route('/confirm_registration')
+async def confirm_registration():
+    registration_token = request.args.get('token')
+    try:
+        controller.user_manager.confirm_registration(registration_token)
+        return 'Confirm Registration Ok!', 200
+    except Exception as e:
+        return 'Confirm Registration ERROR! {}'.format(str(e)), 200
 
 
 @app.route('/token', methods=["POST"])

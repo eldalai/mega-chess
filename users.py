@@ -1,6 +1,10 @@
 import bcrypt
+from datetime import timedelta
+import os
 import ujson
 import uuid
+
+import emails
 
 
 class UserException(Exception):
@@ -20,6 +24,10 @@ class InvalidAuthTokenException(UserException):
     pass
 
 
+class InvalidRegistrationToken(UserException):
+    pass
+
+
 class UserManager(object):
 
     def __init__(self, redis_pool, app):
@@ -31,25 +39,47 @@ class UserManager(object):
     def _user_id(self, username):
         return 'user:{}'.format(username)
 
+    def _registration_id(self, registration_token):
+        return 'registration:{}'.format(registration_token)
+
     def _token_id(self, auth_token):
         return 'auth:{}'.format(auth_token)
 
     def _save_user(self, username, password):
         self.app.logger.info('_save_user username: {}'.format(username))
         try:
-            hash_password = bcrypt.hashpw(
-                password.encode('utf-8'), bcrypt.gensalt()
-            )
             auth_token = str(uuid.uuid4())
             user = ujson.dumps({
                 'username': username,
-                'password': hash_password,
+                'password': password,
                 'auth_token': auth_token,
             })
             self.redis_pool.set(self._user_id(username), user)
             self.redis_pool.set(self._token_id(auth_token), username)
+            return auth_token
         except Exception as e:
             self.app.logger.info('_save_user username: {} Exception'.format(username))
+            raise e
+
+    def _save_registration(self, username, password):
+        self.app.logger.info('_save_registration username: {}'.format(username))
+        try:
+            hash_password = bcrypt.hashpw(
+                password.encode('utf-8'), bcrypt.gensalt()
+            )
+            registration_token = str(uuid.uuid4())
+            registration = ujson.dumps({
+                'username': username,
+                'password': hash_password,
+            })
+            self.redis_pool.set(
+                self._registration_id(registration_token),
+                registration,
+                ex=timedelta(days=1),
+            )
+            return registration_token
+        except Exception as e:
+            self.app.logger.info('_save_registration username: {} Exception'.format(username))
             raise e
 
     def _is_password_valid(self, password, user):
@@ -64,8 +94,34 @@ class UserManager(object):
             self.app.logger.info('register username: {} UserAlreadyExistsException'.format(username))
             raise UserAlreadyExistsException()
         self.app.logger.info('register username: {} ok'.format(username))
-        self._save_user(username, password)
+        registration_token = self._save_registration(username, password)
+        domain_url = os.environ['DOMAIN_URL']
+        emails.send_simple_message(
+            username,
+            'Welcome to Megachess!!',
+            (
+                '<p>Please confirm your email account</p>'
+                '<a href="{}/confirm_registration?token={}">CONFIRM YOUR REGISTRATION</a>'
+            ).format(domain_url, registration_token)
+        )
         return True
+
+    def confirm_registration(self, registration_token):
+        registration_id = self._registration_id(registration_token)
+        if not self.redis_pool.exists(registration_id):
+            raise InvalidRegistrationToken()
+        registration_string = self.redis_pool.get(registration_id)
+        self.redis_pool.delete(registration_id)
+        registration = ujson.loads(registration_string)
+        auth_token = self._save_user(registration['username'], registration['password'])
+        emails.send_simple_message(
+            registration['username'],
+            'Your account in Megachess is confirmed!!!',
+            (
+                '<p>This is your personal auth_token to play</p>'
+                '<p><strong>{}</strong></p>'
+            ).format(auth_token)
+        )
 
     def get_auth_token(self, username, password):
         self.app.logger.info('get auth token username: {}'.format(username))

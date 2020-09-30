@@ -28,9 +28,12 @@ prompt-toolkit==3.0.5
 ptyprocess==0.6.0
 pycparser==2.20
 Pygments==2.6.1
+python-http-client==3.3.1
 Quart==0.13.0
 redis==2.10.5
+sendgrid==6.4.7
 six==1.15.0
+starkbank-ecdsa==1.1.0
 toml==0.10.1
 traitlets==4.3.3
 typing-extensions==3.7.4.2
