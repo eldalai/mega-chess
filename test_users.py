@@ -9,7 +9,9 @@ import fakeredis
 from users import (
     UserManager,
     UserAlreadyExistsException,
+    InvalidRegistrationEmail,
     InvalidRegistrationToken,
+    InvalidRegistrationUsername,
 )
 
 
@@ -46,12 +48,26 @@ class TestUserManager(unittest.TestCase):
             )
         )
 
+    def test_register_invalid_username(self, send_simple_message_patch):
+        with self.assertRaises(InvalidRegistrationUsername):
+            self.user_manager.register('g aby', 'pass', 'gab@example.com')
+
+        with self.assertRaises(InvalidRegistrationUsername):
+            self.user_manager.register('gaby1', 'pass', 'gab@example.com')
+
+    def test_register_invalid_email(self, send_simple_message_patch):
+        with self.assertRaises(InvalidRegistrationEmail):
+            self.user_manager.register('gaby', 'pass', 'gab@')
+
+        with self.assertRaises(InvalidRegistrationEmail):
+            self.user_manager.register('gaby', 'pass', 'gabexample.com')
+
     def test_register_already_exists(self, send_simple_message_patch):
         fake_registration_token = 'ABCDEFH'
-        self.user_manager._save_user('gabriel2', '<fake+pass>', 'gabriel2@example.com')
+        self.user_manager._save_user('gabrieltwo', '<fake+pass>', 'gabrieltwo@example.com')
         with patch('uuid.uuid4', return_value=fake_registration_token), \
              self.assertRaises(UserAlreadyExistsException):
-            self.user_manager.register('gabriel2', '12345678', 'gabriel2@example.com')
+            self.user_manager.register('gabrieltwo', '12345678', 'gabrieltwo@example.com')
         self.assertEqual(send_simple_message_patch.call_count, 0)
         self.assertFalse(
             self.fake_redis.exists(
@@ -62,12 +78,12 @@ class TestUserManager(unittest.TestCase):
     def test_confirm_registration_success(self, send_simple_message_patch):
         fake_registration_token = 'ABCDEFGI'
         with patch('uuid.uuid4', return_value=fake_registration_token):
-            self.user_manager.register('gabriel3', '12345678', 'gabriel3@example.com')
+            self.user_manager.register('gabrielthree', '12345678', 'gabrielthree@example.com')
         fake_auth_token = 'wqerqwerqwer'
         with patch('uuid.uuid4', return_value=fake_auth_token):
             self.user_manager.confirm_registration(fake_registration_token)
         self.assertIsNotNone(
-            self.user_manager.get_user_by_username('gabriel3')
+            self.user_manager.get_user_by_username('gabrielthree')
         )
         self.assertFalse(
             self.fake_redis.exists(
@@ -78,7 +94,7 @@ class TestUserManager(unittest.TestCase):
         self.assertEqual(
             send_simple_message_patch.call_args[0],
             (
-                'gabriel3@example.com',
+                'gabrielthree@example.com',
                 'Your account in Megachess is confirmed!!!',
                 (
                     '<p>This is your personal auth_token to play</p>'

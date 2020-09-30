@@ -28,6 +28,14 @@ class InvalidRegistrationToken(UserException):
     pass
 
 
+class InvalidRegistrationUsername(UserException):
+    pass
+
+
+class InvalidRegistrationEmail(UserException):
+    pass
+
+
 class UserManager(object):
 
     def __init__(self, redis_pool, app):
@@ -91,6 +99,12 @@ class UserManager(object):
         )
 
     def register(self, username, password, email):
+        import re
+        if not username.isalpha():
+            raise InvalidRegistrationUsername('El username solo puede contener letras')
+        email_validator = '^[a-z]([w-]*[a-z]|[w-.]*[a-z]{2,}|[a-z])*@[a-z]([w-]*[a-z]|[w-.]*[a-z]{2,}|[a-z]){4,}?.[a-z]{2,}$'
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            raise InvalidRegistrationEmail()
         self.app.logger.info('register username: {}'.format(username))
         if self.redis_pool.get(self._user_id(username)):
             self.app.logger.info('register username: {} UserAlreadyExistsException'.format(username))
