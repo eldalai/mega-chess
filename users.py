@@ -29,11 +29,13 @@ class InvalidRegistrationToken(UserException):
 
 
 class InvalidRegistrationUsername(UserException):
-    pass
+    def __init__(self):
+        super().__init__('El username solo puede contener letras')
 
 
 class InvalidRegistrationEmail(UserException):
-    pass
+    def __init__(self):
+        super().__init__('El email no tiene formato correcto')
 
 
 class UserManager(object):
@@ -101,7 +103,7 @@ class UserManager(object):
     def register(self, username, password, email):
         import re
         if not username.isalpha():
-            raise InvalidRegistrationUsername('El username solo puede contener letras')
+            raise InvalidRegistrationUsername()
         email_validator = '^[a-z]([w-]*[a-z]|[w-.]*[a-z]{2,}|[a-z])*@[a-z]([w-]*[a-z]|[w-.]*[a-z]{2,}|[a-z]){4,}?.[a-z]{2,}$'
         if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
             raise InvalidRegistrationEmail()
