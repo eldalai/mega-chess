@@ -43,11 +43,13 @@ $("#challenge-form").on("submit", function(event) {
 
 $("#register-form").on("submit", function(event) {
   event.preventDefault();
-  var username   = $("#input-register-username")[0].value;
-  var password   = $("#input-register-password")[0].value;
+  var username = $("#input-register-username")[0].value;
+  var password = $("#input-register-password")[0].value;
+  var email = $("#input-register-email")[0].value;
   var data = {
       username: username,
-      password: password
+      password: password,
+      email: email
   };
   $.ajax({
     type: "POST",

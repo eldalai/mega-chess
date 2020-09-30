@@ -27,7 +27,7 @@ class TestUserManager(unittest.TestCase):
         fake_registration_token = 'ABCDEF'
         with patch('uuid.uuid4', return_value=fake_registration_token), \
              patch.dict('os.environ', {'DOMAIN_URL': 'http://MY_DOMAIN_URL'}):
-            self.user_manager.register('gabriel@example.com', '12345678')
+            self.user_manager.register('gabriel', '12345678', 'gabriel@example.com')
         self.assertEqual(send_simple_message_patch.call_count, 1)
         self.assertEqual(
             send_simple_message_patch.call_args[0],
@@ -48,10 +48,10 @@ class TestUserManager(unittest.TestCase):
 
     def test_register_already_exists(self, send_simple_message_patch):
         fake_registration_token = 'ABCDEFH'
-        self.user_manager._save_user('gabriel2@example.com', '<fake+pass>')
+        self.user_manager._save_user('gabriel2', '<fake+pass>', 'gabriel2@example.com')
         with patch('uuid.uuid4', return_value=fake_registration_token), \
              self.assertRaises(UserAlreadyExistsException):
-            self.user_manager.register('gabriel2@example.com', '12345678')
+            self.user_manager.register('gabriel2', '12345678', 'gabriel2@example.com')
         self.assertEqual(send_simple_message_patch.call_count, 0)
         self.assertFalse(
             self.fake_redis.exists(
@@ -62,12 +62,12 @@ class TestUserManager(unittest.TestCase):
     def test_confirm_registration_success(self, send_simple_message_patch):
         fake_registration_token = 'ABCDEFGI'
         with patch('uuid.uuid4', return_value=fake_registration_token):
-            self.user_manager.register('gabriel3@example.com', '12345678')
+            self.user_manager.register('gabriel3', '12345678', 'gabriel3@example.com')
         fake_auth_token = 'wqerqwerqwer'
         with patch('uuid.uuid4', return_value=fake_auth_token):
             self.user_manager.confirm_registration(fake_registration_token)
         self.assertIsNotNone(
-            self.user_manager.get_user_by_username('gabriel3@example.com')
+            self.user_manager.get_user_by_username('gabriel3')
         )
         self.assertFalse(
             self.fake_redis.exists(

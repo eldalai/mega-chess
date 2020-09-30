@@ -45,12 +45,13 @@ class UserManager(object):
     def _token_id(self, auth_token):
         return 'auth:{}'.format(auth_token)
 
-    def _save_user(self, username, password):
+    def _save_user(self, username, password, email):
         self.app.logger.info('_save_user username: {}'.format(username))
         try:
             auth_token = str(uuid.uuid4())
             user = ujson.dumps({
                 'username': username,
+                'email': email,
                 'password': password,
                 'auth_token': auth_token,
             })
@@ -61,7 +62,7 @@ class UserManager(object):
             self.app.logger.info('_save_user username: {} Exception'.format(username))
             raise e
 
-    def _save_registration(self, username, password):
+    def _save_registration(self, username, password, email):
         self.app.logger.info('_save_registration username: {}'.format(username))
         try:
             hash_password = bcrypt.hashpw(
@@ -70,6 +71,7 @@ class UserManager(object):
             registration_token = str(uuid.uuid4())
             registration = ujson.dumps({
                 'username': username,
+                'email': email,
                 'password': hash_password,
             })
             self.redis_pool.set(
@@ -88,16 +90,16 @@ class UserManager(object):
             user['password'].encode('utf-8'),
         )
 
-    def register(self, username, password):
+    def register(self, username, password, email):
         self.app.logger.info('register username: {}'.format(username))
         if self.redis_pool.get(self._user_id(username)):
             self.app.logger.info('register username: {} UserAlreadyExistsException'.format(username))
             raise UserAlreadyExistsException()
         self.app.logger.info('register username: {} ok'.format(username))
-        registration_token = self._save_registration(username, password)
+        registration_token = self._save_registration(username, password, email)
         domain_url = os.environ['DOMAIN_URL']
         emails.send_simple_message(
-            username,
+            email,
             'Welcome to Megachess!!',
             (
                 '<p>Please confirm your email account</p>'
@@ -113,9 +115,13 @@ class UserManager(object):
         registration_string = self.redis_pool.get(registration_id)
         self.redis_pool.delete(registration_id)
         registration = ujson.loads(registration_string)
-        auth_token = self._save_user(registration['username'], registration['password'])
-        emails.send_simple_message(
+        auth_token = self._save_user(
             registration['username'],
+            registration['password'],
+            registration['email'],
+        )
+        emails.send_simple_message(
+            registration['email'],
             'Your account in Megachess is confirmed!!!',
             (
                 '<p>This is your personal auth_token to play</p>'
