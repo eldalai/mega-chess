@@ -1,6 +1,8 @@
 import unittest
 import ujson
+
 import fakeredis
+from freezegun import freeze_time
 
 from pychess.chess import (
     BLACK,
@@ -36,36 +38,37 @@ class TestChessManager(unittest.TestCase):
     def test_save(self):
         _board = BoardFactory.size_16()
         board_id = '1234567890'
-        board = PlayingBoard(_board, 'white player', 'black player', 10)
+        with freeze_time('2020-10-20 13:15:32'):
+            board = PlayingBoard(_board, 'white player', 'black player', 10)
         self.manager._save_board(board_id, board)
         self.assertTrue(self.fake_redis.exists('board:1234567890'))
         saved_boar_str = self.fake_redis.get('board:1234567890')
         restored_board = ujson.loads(saved_boar_str)
+        board_str = (
+            ('rrhhbbqqkkbbhhrr' * 2) +
+            ('pppppppppppppppp' * 2) +
+            ('                ' * 8) +
+            ('PPPPPPPPPPPPPPPP' * 2) +
+            ('RRHHBBQQKKBBHHRR' * 2)
+        )
+        expected_board = {
+            'board': {
+                'actual_turn': 'white',
+                'size': 16,
+                'board': board_str
+            },
+            'white_username': 'white player',
+            'black_username': 'black player',
+            'turn_token': None,
+            'board_id': None,
+            'white_score': 0,
+            'black_score': 0,
+            'move_left': 10,
+            'created': '2020-10-20 13:15:32',
+        }
         self.assertEqual(
             restored_board,
-            {
-                'board': {
-                    'actual_turn': 'white',
-                    'size': 16,
-                    'board': (
-                        'rrhhbbqqkkbbhhrr' +
-                        'rrhhbbqqkkbbhhrr' +
-                        'pppppppppppppppp' +
-                        'pppppppppppppppp' +
-                        ('                ' * 8) +
-                        'PPPPPPPPPPPPPPPP' +
-                        'PPPPPPPPPPPPPPPP' +
-                        'RRHHBBQQKKBBHHRR' +
-                        'RRHHBBQQKKBBHHRR'
-                    )
-                },
-                'white_username': 'white player',
-                'black_username': 'black player',
-                'turn_token': None,
-                'white_score': 0,
-                'black_score': 0,
-                'move_left': 10,
-            }
+            expected_board,
         )
 
     def test_create_board(self):
@@ -82,7 +85,7 @@ class TestChessManager(unittest.TestCase):
         board = self.manager.get_board_by_id(self.board_id)
         self.assertIsNotNone(board)
         self.assertEqual(board.board.actual_turn, WHITE)
-        self.assertEqual(board.white_score, -20)
+        self.assertEqual(board.white_score, 0)
         self.assertEqual(board.black_score, 0)
 
     def test_move(self):
@@ -116,6 +119,25 @@ class TestChessManager(unittest.TestCase):
         self.assertIsNotNone(third_turn_token)
         self.assertEqual(actual_turn_color, WHITE)
         self.assertEqual(move_left, 7)
+
+    def test_save_user_stats(self):
+        board = self.manager.get_board_by_id(self.board_id)
+        self.manager._save_user_stats(board)
+        self.assertTrue(
+            self.fake_redis.exists(self.manager.get_user_stats_key('white'))
+        )
+        self.assertTrue(
+            self.fake_redis.exists(self.manager.get_user_stats_key('black'))
+        )
+        self.assertEqual(
+            self.fake_redis.llen(self.manager.get_user_stats_key('white')),
+            1,
+        )
+        self.assertEqual(
+            self.fake_redis.llen(self.manager.get_user_stats_key('black')),
+            1,
+        )
+
 
 if __name__ == '__main__':
     unittest.main()

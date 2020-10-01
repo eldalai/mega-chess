@@ -1,5 +1,6 @@
-import uuid
+from datetime import datetime
 import ujson
+import uuid
 
 from pychess.chess import (
     Bishop,
@@ -65,6 +66,7 @@ class PlayingBoard(object):
         move_left,
         white_score=0,
         black_score=0,
+        created=None,
         board_id=None,
     ):
         self.board = board
@@ -75,6 +77,11 @@ class PlayingBoard(object):
         self.black_score = black_score
         self.move_left = move_left
         self.board_id = board_id
+        self.created = (
+            created
+            if created
+            else datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        )
 
     def _apply_score(self, color, score):
         if color == WHITE:
@@ -111,6 +118,7 @@ class PlayingBoard(object):
             'black_score': self.black_score,
             'move_left': self.move_left,
             'board_id': self.board_id,
+            'created': self.created,
         }
 
 
@@ -133,6 +141,7 @@ class ChessManager(object):
         playing_board.move_left -= 1
         if playing_board.status == FINISH:
             self._save_board(board_id, playing_board)
+            self._save_user_stats(playing_board)
             raise GameOverException()
         turn_token = str(uuid.uuid4())
         new_turn_token_key = self.get_turn_key(turn_token)
@@ -161,6 +170,17 @@ class ChessManager(object):
             playing_board.board.get_simple(),
             playing_board.move_left,
         )
+
+    def get_user_stats_key(self, username):
+        return 'user_stats:{}'.format(username)
+
+    def _save_user_stats(self, playing_board):
+        for username in (playing_board.white_username, playing_board.black_username):
+            user_stats_key = self.get_user_stats_key(username)
+            self.redis_pool.rpush(
+                user_stats_key,
+                ujson.dumps(playing_board.serialize())
+            )
 
     def challenge(self, white_username, black_username, move_left):
         board_id = self.create_board(white_username, black_username, move_left)
@@ -245,6 +265,7 @@ class ChessManager(object):
             board['move_left'],
             board['white_score'],
             board['black_score'],
+            board['created'],
             board_id=board_id,
         )
         return playing_board
