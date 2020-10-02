@@ -31,8 +31,11 @@ from logging import getLogger
 from quart.logging import default_handler
 
 
-
-REDIS_URL = os.environ['REDIS_URL']
+REDIS_URL = os.environ.get('REDIS_URL')
+if REDIS_URL:
+    redis_pool = redis.from_url(url=REDIS_URL, db=0)
+else:
+    redis_pool = redis.Redis(host='redis', port=6379)
 
 app = Quart(__name__)
 
@@ -73,7 +76,6 @@ async def random():
     return await render_template('random.html')
 
 connected_websockets = set()
-redis_pool = redis.from_url(url=REDIS_URL, db=0)
 controller = Controller(redis_pool, app, connected_websockets)
 # offline...
 # controller = Controller(fakeredis.FakeStrictRedis(), app, connected_websockets)
@@ -162,4 +164,4 @@ async def broadcast(websocket, queue):
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host="0.0.0.0", debug=True)
