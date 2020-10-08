@@ -1,6 +1,7 @@
 import bcrypt
 from datetime import timedelta
 import os
+import re
 import ujson
 import uuid
 
@@ -55,29 +56,39 @@ class UserManager(object):
     def _token_id(self, auth_token):
         return 'auth:{}'.format(auth_token)
 
-    def _save_user(self, username, password, email):
+    def _save_user(self, username, hash_password, email):
         self.app.logger.info('_save_user username: {}'.format(username))
         try:
             auth_token = str(uuid.uuid4())
             user = ujson.dumps({
                 'username': username,
                 'email': email,
-                'password': password,
+                'password': hash_password,
                 'auth_token': auth_token,
             })
             self.redis_pool.set(self._user_id(username), user)
             self.redis_pool.set(self._token_id(auth_token), username)
+            emails.send_simple_message(
+                'email',
+                'Your account in Megachess is confirmed!!!',
+                (
+                    '<p>This is your personal auth_token to play for username {}</p>'
+                    '<p><strong>{}</strong></p>'
+                ).format(username, auth_token)
+            )
             return auth_token
         except Exception as e:
             self.app.logger.info('_save_user username: {} Exception'.format(username))
             raise e
 
-    def _save_registration(self, username, password, email):
+    def _hash_password(self, password):
+        return bcrypt.hashpw(
+            password.encode('utf-8'), bcrypt.gensalt()
+        )
+
+    def _save_registration(self, username, hash_password, email):
         self.app.logger.info('_save_registration username: {}'.format(username))
         try:
-            hash_password = bcrypt.hashpw(
-                password.encode('utf-8'), bcrypt.gensalt()
-            )
             registration_token = str(uuid.uuid4())
             registration = ujson.dumps({
                 'username': username,
@@ -100,19 +111,25 @@ class UserManager(object):
             user['password'].encode('utf-8'),
         )
 
-    def register(self, username, password, email):
-        import re
+    def validate_registration(self, username, email):
         if not username.isalpha():
             raise InvalidRegistrationUsername()
         email_validator = '^[a-z]([w-]*[a-z]|[w-.]*[a-z]{2,}|[a-z])*@[a-z]([w-]*[a-z]|[w-.]*[a-z]{2,}|[a-z]){4,}?.[a-z]{2,}$'
         if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
             raise InvalidRegistrationEmail()
-        self.app.logger.info('register username: {}'.format(username))
         if self.redis_pool.get(self._user_id(username)):
             self.app.logger.info('register username: {} UserAlreadyExistsException'.format(username))
             raise UserAlreadyExistsException()
+
+    def register(self, username, password, email, auto=True):
+        self.app.logger.info('register username: {}'.format(username))
+        self.validate_registration(username, email)
         self.app.logger.info('register username: {} ok'.format(username))
-        registration_token = self._save_registration(username, password, email)
+        hash_password = self._hash_password(password)
+        if auto:
+            self._save_user(username, hash_password, email)
+            return
+        registration_token = self._save_registration(username, hash_password, email)
         domain_url = os.environ['DOMAIN_URL']
         emails.send_simple_message(
             email,
@@ -131,18 +148,10 @@ class UserManager(object):
         registration_string = self.redis_pool.get(registration_id)
         self.redis_pool.delete(registration_id)
         registration = ujson.loads(registration_string)
-        auth_token = self._save_user(
+        self._save_user(
             registration['username'],
             registration['password'],
             registration['email'],
-        )
-        emails.send_simple_message(
-            registration['email'],
-            'Your account in Megachess is confirmed!!!',
-            (
-                '<p>This is your personal auth_token to play</p>'
-                '<p><strong>{}</strong></p>'
-            ).format(auth_token)
         )
 
     def get_auth_token(self, username, password):

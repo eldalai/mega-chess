@@ -14,12 +14,12 @@ services:
     image: redis
     ports:
       - "6379:6379"
-  nginx:
-    depends_on:
-      - web
-    restart: always
-    build:
-      dockerfile: Dockerfile
-      context: ./nginx
-    ports:
-      - "3050:80"
+  # nginx:
+  #   depends_on:
+  #     - web
+  #   restart: always
+  #   build:
+  #     dockerfile: Dockerfile
+  #     context: ./nginx
+  #   ports:
+  #     - "3050:80"
