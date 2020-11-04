@@ -69,7 +69,7 @@ class UserManager(object):
             self.redis_pool.set(self._user_id(username), user)
             self.redis_pool.set(self._token_id(auth_token), username)
             emails.send_simple_message(
-                'email',
+                email,
                 'Your account in Megachess is confirmed!!!',
                 (
                     '<p>This is your personal auth_token to play for username {}</p>'
@@ -121,11 +121,12 @@ class UserManager(object):
             self.app.logger.info('register username: {} UserAlreadyExistsException'.format(username))
             raise UserAlreadyExistsException()
 
-    def register(self, username, password, email, auto=True):
+    def register(self, username, password, email, auto_hash=None):
         self.app.logger.info('register username: {}'.format(username))
         self.validate_registration(username, email)
         self.app.logger.info('register username: {} ok'.format(username))
         hash_password = self._hash_password(password)
+        auto = auto_hash == os.getenv('AUTO_REGISTER_TOKEN') if auto_hash else False
         if auto:
             self._save_user(username, hash_password, email)
             return

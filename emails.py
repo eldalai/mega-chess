@@ -18,7 +18,7 @@ def send_simple_message(email_to, subject, content):
     message["From"] = sender_email
     message["To"] = email_to
 
-    part1 = MIMEText(content, "plain")
+    part1 = MIMEText(content, "html")
 
     message.attach(part1)
     with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
