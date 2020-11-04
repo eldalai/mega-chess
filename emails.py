@@ -1,17 +1,26 @@
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import os
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
+import smtplib
+import ssl
 
 
 def send_simple_message(email_to, subject, content):
-    message = Mail(
-        from_email='gabrielf@eventbrite.com',
-        to_emails=email_to,
-        subject=subject,
-        html_content=content,
-    )
-    sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
-    response = sg.send(message)
-    print(response.status_code)
-    print(response.body)
-    print(response.headers)
+
+    port = 465  # For SSL
+    smtp_server = os.getenv('SMTP_SERVER')
+    sender_email = os.getenv('SMTP_USERNAME')
+    password = os.getenv('SMTP_PASSWORD')
+    context = ssl.create_default_context()
+
+    message = MIMEMultipart("alternative")
+    message["Subject"] = subject
+    message["From"] = sender_email
+    message["To"] = email_to
+
+    part1 = MIMEText(content, "plain")
+
+    message.attach(part1)
+    with smtplib.SMTP_SSL(smtp_server, port, context=context) as server:
+        server.login(sender_email, password)
+        server.sendmail(sender_email, email_to, message.as_string())
