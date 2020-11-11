@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Mega Chess</title>
+    <link href="static/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="static/css/application.css" rel="stylesheet" media="screen">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  </head>
+  <body>
+    <div class="container">
+      <div class="jumbotron">
+        <h1>Mega Chess</h1>
+      </div>
+      <form id="challenge-form">
+        <div class="form-group">
+          <input id="input-challenge-username" type="text" class="form-control" placeholder="Enter username of your opponent" autofocus />
+        </div>
+        <div>
+          <input id="input-challenge-message" type="text" class="form-control" placeholder="Enter a message to your opponent" autofocus />
+        </div>
+        <button class="btn btn-primary" type="submit">Challenge</button>
+      </form>
+    </div>
+
+
+    <script type="text/javascript" src="static/js/jquery-2.0.3.min.js"></script>
+    <script type="text/javascript" src="static/js/reconnecting-websocket.min.js"></script>
+    <script type="text/javascript" src="static/js/challenge.js"></script>
+  </body>
+</html>

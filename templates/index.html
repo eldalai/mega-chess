@@ -11,7 +11,7 @@
       <div class="jumbotron">
         <h1>Mega Chess</h1>
       </div>
-      <form id="register-form" action="register" class="form-inline">
+      <form id="register-form" action="register">
         <div class="form-group">
           <input id="input-register-username" type="text" class="form-control" placeholder="Enter your username" autofocus />
         </div>
@@ -23,7 +23,7 @@
         </div>
         <button class="btn btn-primary" type="submit">Register</button>
       </form>
-      <form id="get-token-form" class="form-inline">
+      <form id="get-token-form">
         <div class="form-group">
           <input id="input-get-token-username" type="text" class="form-control" placeholder="Enter your username" autofocus />
         </div>
@@ -36,17 +36,9 @@
         <span>Your auth_token is</span>
         <span id="spam-auth-token"></span>
         <a id="link-random" class="btn" target="blank">Try javascript Random</a>
+        <a id="link-challenge" class="btn" target="blank">Challenge Opponent</a>
         <a id="link-tournaments" class="btn" target="blank">Tournaments</a>
       </div>
-      <form id="challenge-form" class="form-inline">
-        <div class="form-group">
-          <select id="input-challenge-username" class="form-control" autofocus />
-        </div>
-        <div>
-          <input id="input-challenge-message" type="text" class="form-control" placeholder="Enter a message to your oponent" autofocus />
-        </div>
-        <button class="btn btn-primary" type="submit">Challenge</button>
-      </form>
     </div>
 
 

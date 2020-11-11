@@ -75,6 +75,12 @@ async def board_log(board_id):
 async def random():
     return await render_template('random.html')
 
+
+@app.route('/challenge')
+async def challenge():
+    return await render_template('challenge.html')
+
+
 connected_websockets = set()
 controller = Controller(redis_pool, app, connected_websockets)
 # offline...
@@ -111,6 +117,17 @@ async def get_auth_token():
         return result, 200
     except Exception as e:
         return 'Register ERROR! {}'.format(str(e)), 200
+
+
+@app.route('/ask_challenge', methods=["POST"])
+async def ask_challenge():
+    challenge = await request.get_json()
+    print(challenge)
+    try:
+        await controller.challenge_with_auth_token(**challenge)
+        return 'Challenge sent', 200
+    except Exception as e:
+        return 'Challenge ERROR! {}'.format(str(e)), 200
 
 
 def collect_websocket(func):

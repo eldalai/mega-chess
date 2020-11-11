@@ -161,6 +161,13 @@ class Controller:
     async def action_challenge(self, current_username, client, data):
         challenged_username = data['username']
         challenger_username = current_username
+        await self._challenge(challenger_username, challenged_username)
+
+    async def challenge_with_auth_token(self, auth_token, username, message):
+        challenger_username = await self.user_manager.get_username_by_auth_token(auth_token)
+        return await self._challenge(challenger_username, username)
+
+    async def _challenge(self, challenger_username, challenged_username):
         self.app.logger.info('action_challenge {} from {}'.format(challenged_username, challenger_username))
         if random.choice([True, False]):
             white_username = challenger_username
