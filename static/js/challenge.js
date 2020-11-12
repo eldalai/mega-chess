@@ -25,7 +25,7 @@ $("#challenge-form").on("submit", function(event) {
     data: JSON.stringify(data),
     contentType: "application/json",
     complete: function(data) {
-      alert(data.responseText);
+        $('#spam-challenge-response').html(data.responseText);
     }
     });
 
