@@ -18,6 +18,10 @@ from quart import Quart, websocket, render_template, request
 from controller import Controller
 
 
+class NoTokenException(Exception):
+    pass
+
+
 dictConfig({
     'version': 1,
     'loggers': {
@@ -143,21 +147,28 @@ def collect_websocket(func):
     return wrapper
 
 
+async def get_current_username(websocket):
+    auth_token = websocket.args.get('authtoken')
+    if not auth_token:
+        raise NoTokenException()
+    return await controller.user_manager.get_username_by_auth_token(auth_token)
+
+
 @app.websocket('/service')
 @collect_websocket
 async def service(queue):
     # websocket.headers
 
     try:
+        current_username = await get_current_username(websocket)
         queue.websocket = websocket
         websocket.queue = queue
+        await controller.action_login(current_username, websocket)
         asyncio.create_task(broadcast(websocket, queue))
         while True:
             message = await websocket.receive()
-            # await websocket.send("Receive ")
             if message:
                 app.logger.info(u'Receive from {}...{}'.format(websocket, queue))
-                # import ipdb; ipdb.set_trace()
                 app.logger.info(
                     u'Processing message: {} from: {}'.format(message, websocket),
                 )

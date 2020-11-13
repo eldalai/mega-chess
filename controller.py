@@ -39,10 +39,6 @@ class InvalidTokenException(ControllerExcetions):
     pass
 
 
-class NoTokenException(ControllerExcetions):
-    pass
-
-
 class InvalidRegisterException(ControllerExcetions):
     pass
 
@@ -70,7 +66,7 @@ class Controller:
         self.app.logger.info(
             'process_message: message: {}'.format(message)
         )
-        asyncio.create_task(self.process_message(client, message))
+        await self.process_message(client, message)
 
     async def get_current_username(self, client):
         auth_token = client.args.get('authtoken')
@@ -131,7 +127,7 @@ class Controller:
         }
         await self.send(client, 'update_user_list', data)
 
-    async def action_login(self, current_username, client, data):
+    async def action_login(self, current_username, client, data=None):
         self.app.logger.info('action_login {} {}'.format(client, current_username))
         client.username = current_username
         client.queue.username = current_username

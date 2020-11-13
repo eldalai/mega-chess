@@ -56,7 +56,7 @@ var processing = false;
 
 service.onopen = function() {
   console.log('service open');
-  send('login', {});
+  // send('login', {});
 };
 
 service.onclose = function(){
