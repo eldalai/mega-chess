@@ -205,7 +205,7 @@ class Controller:
         return True
 
     async def _start_board(self, board_id):
-        turn_token, username, actual_turn, board, move_left = self.chess_manager.challenge_accepted(board_id)
+        turn_token, username, actual_turn, board, move_left, opponent_username = self.chess_manager.challenge_accepted(board_id)
         next_turn_data = {
             'board_id': board_id,
             'turn_token': turn_token,
@@ -213,6 +213,7 @@ class Controller:
             'actual_turn': actual_turn,
             'board': board,
             'move_left': move_left,
+            'opponent_username': opponent_username,
         }
         self.app.logger.info('action_accept_challenge ok'.format(board_id, next_turn_data))
         await self.set_next_turn(board_id, next_turn_data)
@@ -231,7 +232,7 @@ class Controller:
             raise TimeoutException()
         processed = False
         try:
-            turn_token, username, actual_turn, board, move_left = self.chess_manager.move_with_turn_token(
+            turn_token, username, actual_turn, board, move_left, opponent_username = self.chess_manager.move_with_turn_token(
                 turn_token=data['turn_token'],
                 from_row=data['from_row'],
                 from_col=data['from_col'],
@@ -259,6 +260,7 @@ class Controller:
             'actual_turn': actual_turn,
             'board': board,
             'move_left': move_left,
+            'opponent_username': opponent_username,
         }
         await self.set_next_turn(board_id, next_turn_data)
 
@@ -307,7 +309,7 @@ class Controller:
     async def force_change_turn(self, board_id, turn_token):
         self.app.logger.info('force_change_turn {} {}'.format(board_id, turn_token))
         try:
-            turn_token, username, actual_turn, board, move_left = self.chess_manager.force_change_turn(board_id, turn_token)
+            turn_token, username, actual_turn, board, move_left, opponent_username = self.chess_manager.force_change_turn(board_id, turn_token)
         except GameOverException:
             await self.send_gameover(board_id)
             return
@@ -318,6 +320,7 @@ class Controller:
                 'actual_turn': actual_turn,
                 'board': board,
                 'move_left': move_left,
+                'opponent_username': opponent_username,
         }
         self.app.logger.info('force_change_turn set_next_turn {} {}'.format(board_id, turn_token))
         await self.set_next_turn(board_id, next_turn_data)

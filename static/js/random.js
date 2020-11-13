@@ -175,7 +175,7 @@ function verifyBoard(data) {
     "<div>" +
     "<p>board id: " + data.board_id +
     "<a href=\"/board-log/" + data.board_id + "\" class=\"btn\" target=\"blank\">View Board Log</a></p>" +
-    "<p>actual turn: " + data.actual_turn + "</p>" +
+    "<p>your color: " + data.actual_turn + "        Opponent: " + data.opponent_username + "</p>" +
     "<p>moves left: <span id=move_left_" + data.board_id + " \> </p>" +
     "</div>"
   ).appendTo(boards);

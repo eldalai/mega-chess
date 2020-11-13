@@ -110,7 +110,7 @@ class PlayingBoard(object):
             white_pieces = 0
             black_pieces = 0
             for piece in self.board.get_simple():
-                if piece:
+                if piece != ' ':
                     if piece.upper() == piece:
                         white_pieces += 1
                     else:
@@ -164,11 +164,12 @@ class ChessManager(object):
         playing_board.turn_token = turn_token
         self.redis_pool.set(new_turn_token_key, board_id)
         self._save_board(board_id, playing_board)
-        actual_username = (
-            playing_board.white_username
-            if playing_board.board.actual_turn == WHITE
-            else playing_board.black_username
-        )
+        if playing_board.board.actual_turn == WHITE:
+            actual_username = playing_board.white_username
+            opponent_username = playing_board.black_username
+        else:
+            actual_username = playing_board.black_username
+            opponent_username = playing_board.white_username
         self.log_board_data(
             board_id,
             'next_turn_token',
@@ -185,6 +186,7 @@ class ChessManager(object):
             playing_board.board.actual_turn,
             playing_board.board.get_simple(),
             playing_board.move_left,
+            opponent_username,
         )
 
     def get_user_stats_key(self, username):
