@@ -21,7 +21,6 @@ async def start(auth_token):
     while True:
         print('connection to {}'.format(uri))
         async with websockets.connect(uri) as websocket:
-            await send(websocket, 'login', {})
             await play(websocket)
 
 
