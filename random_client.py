@@ -17,7 +17,7 @@ async def send(websocket, action, data):
 
 
 async def start(auth_token):
-    uri = "ws://mega-chess-qa.herokuapp.com/service?authtoken={}".format(auth_token)
+    uri = "ws://megachess.herokuapp.com/service?authtoken={}".format(auth_token)
     while True:
         print('connection to {}'.format(uri))
         async with websockets.connect(uri) as websocket:
@@ -35,6 +35,7 @@ async def play(websocket):
             if data['event'] == 'gameover':
                 pass
             if data['event'] == 'ask_challenge':
+                # if data['data']['username'] == 'favoriteopponent':
                 await send(
                     websocket,
                     'accept_challenge',
