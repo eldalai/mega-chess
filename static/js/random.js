@@ -106,7 +106,13 @@ service.onmessage = function(message) {
       pieces = boards[data.data.board_id].black_pieces
     }
     selectedPiece = null;
+    control = 50
     while(!selectedPiece) {
+      control = control - 1;
+      if(control == 0) {
+        processing = false;
+        return;
+      }
       selectedPiece = pieces[random(pieces.length)];
       if(!selectedPiece.piece_strategy) {
         selectedPiece = null;
