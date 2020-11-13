@@ -100,11 +100,27 @@ class PlayingBoard(object):
 
     @property
     def status(self):
+        force_finish = False
+        if(
+            self.white_score < score_by_action[INVALID_MOVE] * FORCE_GAMEOVER_LIMIT or
+            self.black_score < score_by_action[INVALID_MOVE] * FORCE_GAMEOVER_LIMIT
+        ):
+            force_finish = True
+        else:
+            white_pieces = 0
+            black_pieces = 0
+            for piece in self.board.get_simple():
+                if piece:
+                    if piece.upper() == piece:
+                        white_pieces += 1
+                    else:
+                        black_pieces += 1
+            if white_pieces == 0 or black_pieces == 0:
+                force_finish = True
+
         return (
             ACTIVE
-            if self.move_left > 0 and
-            self.white_score > score_by_action[INVALID_MOVE] * FORCE_GAMEOVER_LIMIT and
-            self.black_score > score_by_action[INVALID_MOVE] * FORCE_GAMEOVER_LIMIT
+            if self.move_left > 0 and not force_finish
             else FINISH
         )
 
