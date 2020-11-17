@@ -302,6 +302,7 @@ class Controller:
             'black_username': str(board.black_username),
             'white_score': str(board.white_score),
             'black_score': str(board.black_score),
+            'board_id': board_id,
         }
         await self.broadcast('gameover', data, board.white_username)
         await self.broadcast('gameover', data, board.black_username)
