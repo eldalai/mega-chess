@@ -35,7 +35,7 @@ score_by_piece = {
     Horse.PIECE_LETTER: 30,
     Bishop.PIECE_LETTER: 40,
     Rook.PIECE_LETTER: 60,
-    Queen.PIECE_LETTER: 70,
+    Queen.PIECE_LETTER: 5,
     King.PIECE_LETTER: 100,
 }
 
