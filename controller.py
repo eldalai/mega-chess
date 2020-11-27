@@ -338,7 +338,7 @@ class Controller:
             await self.broadcast('your_turn', data, data['username'])
             # self.notify_to_board_subscribers(data['board_id'])
             # control timeout
-            await asyncio.sleep(10)
+            await asyncio.sleep(20)
             self.app.logger.info('Checking timeout {} {}'.format(data['board_id'], data['turn_token']))
             if self.redis_pool.exists(key):
                 self.app.logger.info('Forcing timeout {} {}'.format(data['board_id'], data['turn_token']))
