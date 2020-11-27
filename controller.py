@@ -218,6 +218,11 @@ class Controller:
         self.app.logger.info('action_accept_challenge ok'.format(board_id, next_turn_data))
         await self.set_next_turn(board_id, next_turn_data)
 
+    async def action_abort(self, current_username, client, data):
+        board_id = data['board_id']
+        self.chess_manager.abort(board_id, current_username)
+        await self.send_gameover(board_id)
+
     async def action_move(self, current_username, client, data):
         board_id = data['board_id']
         turn_token = data['turn_token']

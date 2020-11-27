@@ -101,6 +101,12 @@ class PlayingBoard(object):
     def move(self, from_row, from_col, to_row, to_col):
         return self.board.move(from_row, from_col, to_row, to_col)
 
+    def abort(self, username):
+        if self.white_username == username:
+            self.white_score = score_by_action[INVALID_MOVE] * FORCE_GAMEOVER_LIMIT - 1
+        if self.black_username == username:
+            self.black_score = score_by_action[INVALID_MOVE] * FORCE_GAMEOVER_LIMIT - 1
+
     @property
     def status(self):
         force_finish = False
@@ -343,6 +349,11 @@ class ChessManager(object):
                 },
             )
             self._save_board(board_id, playing_board)
+
+    def abort(self, board_id, username):
+        playing_board = self.get_board_by_id(board_id)
+        playing_board.abort(username)
+        self._save_board(board_id, playing_board)
 
     def move_with_turn_token(self, turn_token, from_row, from_col, to_row, to_col):
         board_id = self.get_board_id_by_turn_token(turn_token)
