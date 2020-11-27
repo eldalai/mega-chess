@@ -21,7 +21,7 @@ from pychess.chess import (
 )
 
 INVALID_MOVE = 'invalid_move'
-FORCE_GAMEOVER_LIMIT = 25
+FORCE_GAMEOVER_LIMIT = 10
 
 score_by_action = {
     RESULT_MOVE: 1,
