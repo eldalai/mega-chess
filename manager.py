@@ -172,7 +172,7 @@ class ChessManager(object):
         new_turn_token_key = self.get_turn_key(turn_token)
         playing_board.turn_token = turn_token
         self.redis_pool.set(new_turn_token_key, board_id)
-        self.redis_pool.expire(new_turn_token_key, timedelta(minutes=30))
+        self.redis_pool.expire(new_turn_token_key, timedelta(minutes=120))
         self._save_board(board_id, playing_board)
         if playing_board.board.actual_turn == WHITE:
             actual_username = playing_board.white_username
@@ -243,7 +243,7 @@ class ChessManager(object):
                 'data': data,
             }),
         )
-        self.redis_pool.expire(board_log_key, timedelta(minutes=30))
+        self.redis_pool.expire(board_log_key, timedelta(minutes=120))
 
     def get_board_key(self, board_id):
         return 'board:{}'.format(board_id)
@@ -251,7 +251,7 @@ class ChessManager(object):
     def _save_board(self, board_id, board):
         board_key = self.get_board_key(board_id)
         self.redis_pool.set(board_key, ujson.dumps(board.serialize()))
-        self.redis_pool.expire(board_key, timedelta(minutes=30))
+        self.redis_pool.expire(board_key, timedelta(minutes=120))
 
     def create_board(self, white_username, black_username, move_left, prefix=''):
         board_id = str(uuid.uuid4())
