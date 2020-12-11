@@ -45,6 +45,7 @@ service.onmessage = function(message) {
   }
   if(data.event == 'update_user_list') {
     $("#input-user-add-tournament-username").empty();
+    $("#input-user-add-tournament-username").append("<option value='*'>*</option>");
     for( user in data.data.users_list ) {
       $("#input-user-add-tournament-username").append("<option value='" + data.data.users_list[user] + "'>" + data.data.users_list[user] + "</option>");
     }

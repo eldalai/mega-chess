@@ -405,7 +405,12 @@ class Controller:
     async def action_add_user_to_tournament(self, current_username, client, data):
         tournament_id = data['tournament_id']
         username = data['username']
-        self.tournament_manager.add_user(tournament_id, username)
+        if username == '*':
+            active_usernames = await self.get_active_users()
+            for username in active_usernames:
+                self.tournament_manager.add_user(tournament_id, username)
+        else:
+            self.tournament_manager.add_user(tournament_id, username)
         users = self.tournament_manager.get_users(tournament_id)
         await self.send(client, 'user_added_to_tournament', users)
         return True
