@@ -18,7 +18,7 @@ Hypercorn==0.10.2
 hyperframe==5.2.0
 itsdangerous==0.24
 jedi==0.17.2
-Jinja2==2.11.2
+Jinja2==2.11.3
 MarkupSafe==0.23
 mock==1.0.1
 parso==0.7.1
