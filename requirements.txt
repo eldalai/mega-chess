@@ -34,7 +34,7 @@ python-http-client==3.3.1
 Quart==0.13.0
 redis==2.10.5
 six==1.15.0
-starkbank-ecdsa==1.1.0
+starkbank-ecdsa==2.0.1
 toml==0.10.1
 traitlets==4.3.3
 typing-extensions==3.7.4.2
